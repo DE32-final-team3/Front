@@ -52,10 +52,12 @@ class UserApi {
         '/api/user/validate',
       );
 
-      var response =
-          await http.post(url, headers: {'Authorization': 'Bearer $token'});
+      var response = await http.post(url, headers: {
+        'Authorization': 'Bearer $token',
+        'Accept-Charset': 'utf-8',
+      });
 
-      return jsonDecode(response.body);
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } catch (e) {
       print("Error: $e");
       return {};

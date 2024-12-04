@@ -49,7 +49,7 @@ class _PageListState extends State<Pages> {
             label: 'My Page',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.library_music_outlined),
+            icon: Icon(Icons.movie),
             label: 'Curation',
           ),
           BottomNavigationBarItem(

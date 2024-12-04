@@ -109,7 +109,7 @@ class _SignUpState extends State<SignUp> {
   void _validateNickname() async {
     final nickname = _nicknameController.text;
 
-    if (nickname.isEmpty) {
+    if (nickname.isEmpty || nickname.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('닉네임을 입력해주세요'),
@@ -118,15 +118,7 @@ class _SignUpState extends State<SignUp> {
       return;
     }
 
-    if (nickname.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('닉네임에는 공백만 입력할 수 없습니다'),
-            duration: Duration(milliseconds: 500)),
-      );
-      return;
-    }
-// API 호출 코드
+    // API 호출 코드
     var statusCode = await _api_p("nickname", nickname);
     if (statusCode == 200) {
       setState(() {
@@ -173,6 +165,16 @@ class _SignUpState extends State<SignUp> {
     }
 
     return null; // 검증 통과
+  }
+
+  String? _validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return '비밀번호를 입력해주세요.';
+    }
+    if (value != _passwordController.text) {
+      return '비밀번호가 일치하지 않습니다.';
+    }
+    return null;
   }
 
   // 회원가입 처리 함수
@@ -327,15 +329,7 @@ class _SignUpState extends State<SignUp> {
                     },
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '비밀번호를 입력해주세요.';
-                  }
-                  if (value != _passwordController.text) {
-                    return '비밀번호가 일치하지 않습니다.';
-                  }
-                  return null;
-                },
+                validator: _validateConfirmPassword,
               ),
               const SizedBox(height: 16),
               // 회원가입 버튼
