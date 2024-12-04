@@ -6,7 +6,7 @@ import 'package:cinetalk/init_page/find_pw.dart';
 import 'package:cinetalk/init_page/sign_up.dart';
 // features
 import 'package:cinetalk/features/user_provider.dart';
-import 'package:cinetalk/features/user_api.dart';
+import 'package:cinetalk/features/api.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -56,7 +56,7 @@ class _LoginState extends State<Login> {
           const SnackBar(content: Text('이메일과 비밀번호를 입력해주세요.')),
         );
       } else {
-        var response = await UserApi.loginApi(email, password);
+        var response = await UserApi.login(email, password);
 
         if (response) {
           Map<String, dynamic> user = await UserApi.userInfo();

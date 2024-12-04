@@ -6,7 +6,7 @@ import 'dart:convert';
 class UserApi {
   static const _storage = FlutterSecureStorage();
 
-  static Future<bool> loginApi(String email, String password) async {
+  static Future<bool> login(String email, String password) async {
     try {
       String? serverIP = dotenv.env['SERVER_IP']!;
 

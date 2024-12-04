@@ -6,7 +6,7 @@ import 'package:cinetalk/init_page/login.dart';
 import 'package:cinetalk/init_page/page_list.dart';
 // features
 import 'package:cinetalk/features/user_provider.dart';
-import 'package:cinetalk/features/user_api.dart';
+import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/auth.dart';
 
 void main() async {
