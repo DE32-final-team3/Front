@@ -2,6 +2,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+// features
+import 'package:cinetalk/features/auth.dart';
 
 class UserApi {
   static const _storage = FlutterSecureStorage();
@@ -62,5 +64,57 @@ class UserApi {
       print("Error: $e");
       return {};
     }
+  }
+
+  static Future<int> postParameters(String param, String value) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.http(
+      serverIP, // 호스트 주소
+      '/api/user/$param', // 경로
+      {param: value},
+    );
+
+    var response = await http.post(url);
+    return response.statusCode;
+  }
+
+  static Future<int> postBody(Map<String, dynamic> params) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.http(
+      serverIP, // 호스트 주소
+      '/api/user/create', // 경로
+    );
+
+    var response = await http.post(
+      url,
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: jsonEncode(params),
+      encoding: Encoding.getByName('utf-8'),
+    ); // POST 요청 보내기
+    return response.statusCode; // 응답의 상태 코드 반환
+  }
+
+  // update user information
+  static Future<int> update(String param, String value) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+    String? token = await Auth.getToken();
+
+    var url = Uri.http(serverIP, '/api/user/update');
+
+    var response = await http.put(
+      url,
+      headers: {
+        'accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({param: value}),
+    );
+    return response.statusCode;
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+// features
+import 'package:cinetalk/features/api.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -23,41 +22,6 @@ class _SignUpState extends State<SignUp> {
   bool _isNicknameChecked = false;
 
   final _formKey = GlobalKey<FormState>();
-
-  // body로 parameter 넘기는 api
-  Future<int> _api_b(Map<String, dynamic> params) async {
-    String? serverIP = dotenv.env['SERVER_IP']!;
-
-    var url = Uri.http(
-      serverIP, // 호스트 주소
-      '/api/user/create', // 경로
-    );
-
-    var response = await http.post(
-      url,
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: jsonEncode(params),
-      encoding: Encoding.getByName('utf-8'),
-    ); // POST 요청 보내기
-    return response.statusCode; // 응답의 상태 코드 반환
-  }
-
-  // url parameter로 넘기는 api
-  Future<int> _api_p(String param, String value) async {
-    String? serverIP = dotenv.env['SERVER_IP']!;
-
-    var url = Uri.http(
-      serverIP, // 호스트 주소
-      '/api/user/$param', // 경로
-      {param: value},
-    );
-
-    var response = await http.post(url);
-    return response.statusCode;
-  }
 
   void _validateEmail() async {
     final email = _emailController.text;
@@ -83,7 +47,7 @@ class _SignUpState extends State<SignUp> {
     }
 
     // API 호출 코드
-    var statusCode = await _api_p("email", email);
+    var statusCode = await UserApi.postParameters("email", email);
     if (statusCode == 200) {
       setState(() {
         _isEmailChecked = true;
@@ -119,7 +83,7 @@ class _SignUpState extends State<SignUp> {
     }
 
     // API 호출 코드
-    var statusCode = await _api_p("nickname", nickname);
+    var statusCode = await UserApi.postParameters("nickname", nickname);
     if (statusCode == 200) {
       setState(() {
         _isNicknameChecked = true;
@@ -191,7 +155,7 @@ class _SignUpState extends State<SignUp> {
         'password': password
       };
 
-      var statusCode = await _api_b(params);
+      var statusCode = await UserApi.postBody(params);
       if (statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

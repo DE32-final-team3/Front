@@ -1,14 +1,10 @@
-import 'dart:convert';
-
+import 'package:cinetalk/features/api.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:io';
 // features
 import 'package:cinetalk/features/user_provider.dart';
-import 'package:cinetalk/features/auth.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -45,43 +41,12 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
-  Future<int> _api_p(String param, String value) async {
-    String? serverIP = dotenv.env['SERVER_IP']!;
-
-    var url = Uri.http(
-      serverIP, // 호스트 주소
-      '/api/user/$param', // 경로
-      {param: value},
-    );
-
-    var response = await http.post(url);
-    return response.statusCode;
-  }
-
-  Future<int> update(String param, String value) async {
-    String? serverIP = dotenv.env['SERVER_IP']!;
-    String? token = await Auth.getToken();
-
-    var url = Uri.http(serverIP, '/api/user/update');
-
-    var response = await http.put(
-      url,
-      headers: {
-        'accept': 'application/json',
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({param: value}),
-    );
-    return response.statusCode;
-  }
-
   Future<void> _updatePassword() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
       // 서버에 비동기 요청
-      var res = await update("password", _passwordController.text);
+      var res = await UserApi.update("password", _passwordController.text);
       if (res == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -112,9 +77,9 @@ class _EditProfileState extends State<EditProfile> {
     }
 
     // nickname 변경
-    var statusCode = await _api_p("nickname", nickname);
+    var statusCode = await UserApi.postParameters("nickname", nickname);
     if (statusCode == 200) {
-      var res = await update("nickname", nickname);
+      var res = await UserApi.update("nickname", nickname);
 
       if (res == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -161,7 +126,6 @@ class _EditProfileState extends State<EditProfile> {
     if (conditionsMet < 2) {
       return '비밀번호는 영문, 숫자, 특수문자 중 최소 2가지를 포함해야 합니다';
     }
-
     return null;
   }
 
