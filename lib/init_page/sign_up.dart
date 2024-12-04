@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+// pages
+import 'package:cinetalk/init_page/login.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 
@@ -149,22 +151,46 @@ class _SignUpState extends State<SignUp> {
       final password = _passwordController.text;
 
       Map<String, dynamic> params = {
-        'ID': '',
         'email': email,
         'nickname': nickname,
+        'profile': '',
         'password': password
       };
 
       var statusCode = await UserApi.postBody(params);
       if (statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("회원가입 완료"), duration: Duration(milliseconds: 500)),
+        showDialog<String>(
+          context: context,
+          builder: (BuildContext context) => Dialog.fullscreen(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const Text(
+                  "회원가입 완료!",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "$nickname님 회원이 되신 것을 환영합니다.",
+                  style: const TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => const Login()));
+                  },
+                  child: const Text(
+                    "로그인하러 가기",
+                    selectionColor: Colors.red,
+                  ),
+                )
+              ],
+            ),
+          ),
         );
-        _emailController.clear();
-        _nicknameController.clear();
-        _passwordController.clear();
-        _confirmPasswordController.clear();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
