@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -22,7 +21,7 @@ class UserApi {
 
       var url = Uri.http(
         serverIP, // 호스트 주소
-        '/api/user/login', // 경로
+        '/user/login', // 경로
       );
 
       var response = await http.post(
@@ -59,7 +58,7 @@ class UserApi {
       String? serverIP = dotenv.env['SERVER_IP']!;
       var url = Uri.http(
         serverIP,
-        '/api/user/validate',
+        '/user/info',
       );
 
       var response = await http.post(url, headers: {
@@ -79,13 +78,12 @@ class UserApi {
       if (user['profile'] != null && user['profile'].isNotEmpty) {
         Uint8List profileImageBytes = await UserApi.getProfile(user['id']);
 
-        File profileImage =
-            File('${(await getTemporaryDirectory()).path}/profile_image.png')
-              ..writeAsBytesSync(profileImageBytes);
+        // File profileImage =
+        //     File('${(await getTemporaryDirectory()).path}/profile_image.png')
+        //       ..writeAsBytesSync(profileImageBytes);
 
-        userProvider.setUserProfile(profileImage);
+        userProvider.setUserProfile(profileImageBytes);
       }
-
       return;
     } catch (e) {
       print("Error: $e");
@@ -93,12 +91,13 @@ class UserApi {
     }
   }
 
-  static Future<int> postParameters(String param, String value) async {
+  static Future<int> postParameters(
+      String path, String param, String value) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 
     var url = Uri.http(
       serverIP, // 호스트 주소
-      '/api/user/$param', // 경로
+      path, // 경로
       {param: value},
     );
 
@@ -106,12 +105,12 @@ class UserApi {
     return response.statusCode;
   }
 
-  static Future<int> postBody(Map<String, dynamic> params) async {
+  static Future<int> postBody(String path, Map<String, dynamic> params) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 
     var url = Uri.http(
       serverIP, // 호스트 주소
-      '/api/user/create', // 경로
+      path, // 경로
     );
 
     var response = await http.post(
@@ -131,7 +130,7 @@ class UserApi {
     String? serverIP = dotenv.env['SERVER_IP']!;
     String? token = await Auth.getToken();
 
-    var url = Uri.http(serverIP, '/api/user/update');
+    var url = Uri.http(serverIP, '/user/update');
     var response = await http.put(
       url,
       headers: {
@@ -149,7 +148,7 @@ class UserApi {
 
     var url = Uri.http(
       serverIP, // 호스트 주소
-      '/api/user/profile/get', // 경로
+      '/user/profile/get', // 경로
       {"id": id},
     );
 
@@ -163,7 +162,7 @@ class UserApi {
 
     var url = Uri.http(
       serverIP,
-      '/api/user/profile/upload',
+      '/user/profile/upload',
       {"id": id},
     );
 
@@ -184,11 +183,10 @@ class UserApi {
     if (response.statusCode == 200) {
       Uint8List profileImageBytes = await UserApi.getProfile(id);
 
-      File profileImage =
-          File('${(await getTemporaryDirectory()).path}/profile_image.png')
-            ..writeAsBytesSync(profileImageBytes);
+      // File profileImage =
+      //     File('${(await getTemporaryDirectory()).path}/profile_image.png')
+      //       ..writeAsBytesSync(profileImageBytes);
       return;
-      // await getProfile(id); // 성공 시 응답 데이터를 반환
     } else {
       throw Exception(
         '이미지 업로드 실패: ${response.statusCode}',
