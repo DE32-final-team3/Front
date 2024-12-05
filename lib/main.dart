@@ -51,11 +51,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     Future.delayed(const Duration(seconds: 2), () async {
       if (isValid) {
-        Map<String, dynamic> user = await UserApi.userInfo();
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-        userProvider.setUserId(user['id']);
-        userProvider.setUserEmail(user['email']);
-        userProvider.setUserNickname(user['nickname']);
+        await UserApi.userInfo(context);
 
         Navigator.pushReplacement(
           context,

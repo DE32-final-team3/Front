@@ -1,11 +1,9 @@
 import 'package:cinetalk/init_page/page_list.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 // pages
 import 'package:cinetalk/init_page/find_pw.dart';
 import 'package:cinetalk/init_page/sign_up.dart';
 // features
-import 'package:cinetalk/features/user_provider.dart';
 import 'package:cinetalk/features/api.dart';
 
 class Login extends StatefulWidget {
@@ -59,12 +57,7 @@ class _LoginState extends State<Login> {
         var response = await UserApi.login(email, password);
 
         if (response) {
-          Map<String, dynamic> user = await UserApi.userInfo();
-          final userProvider =
-              Provider.of<UserProvider>(context, listen: false);
-          userProvider.setUserId(user['id']);
-          userProvider.setUserEmail(user['email']);
-          userProvider.setUserNickname(user['nickname']);
+          await UserApi.userInfo(context);
 
           Navigator.pushReplacement(
             context,

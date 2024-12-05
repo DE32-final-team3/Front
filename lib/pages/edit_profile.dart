@@ -22,7 +22,6 @@ class _EditProfileState extends State<EditProfile> {
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
 
-  File? _image;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -32,12 +31,29 @@ class _EditProfileState extends State<EditProfile> {
         Provider.of<UserProvider>(context, listen: false).nickname;
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    final XFile? pickedFile = await _picker.pickImage(source: source);
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800, // 최대 가로 크기
+      maxHeight: 800, // 최대 세로 크기
+      imageQuality: 80, // 이미지 품질 (0~100, 100이 최상)
+    );
+
     if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
+      File imageFile = File(pickedFile.path);
+
+      try {
+        // setProfile 함수 호출 (서버에 이미지 업로드)
+        String userId = context.read<UserProvider>().id;
+        await UserApi.setProfile(userId, imageFile, context);
+
+        // 프로필 이미지 업데이트
+        Provider.of<UserProvider>(context, listen: false)
+            .setUserProfile(imageFile);
+      } catch (e) {
+        // 오류 처리
+        print('이미지 업로드 실패: $e');
+      }
     }
   }
 
@@ -174,13 +190,23 @@ class _EditProfileState extends State<EditProfile> {
             Center(
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 80, // 원형의 반지름
-                    backgroundImage: _image != null ? FileImage(_image!) : null,
+                  // Consumer를 사용하여 profile 상태 변경 시 이미지 자동 갱신
+                  Consumer<UserProvider>(
+                    builder: (context, userProvider, child) {
+                      return CircleAvatar(
+                        radius: 80,
+                        backgroundImage: userProvider.profile != null
+                            ? FileImage(userProvider.profile!)
+                            : null,
+                        child: userProvider.profile == null
+                            ? const Icon(Icons.person, size: 80)
+                            : null,
+                      );
+                    },
                   ),
                   const SizedBox(height: 10), // 프로필 사진과 버튼 사이 여백
                   ElevatedButton(
-                    onPressed: () => _pickImage(ImageSource.gallery),
+                    onPressed: _pickImage,
                     child: const Text('프로필 사진 변경'),
                   ),
                 ],

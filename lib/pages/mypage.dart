@@ -13,9 +13,6 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
-  // 임시 데이터
-  String profilePictureUrl = ''; // 프로필 사진 URL
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,8 +40,13 @@ class _MyPageState extends State<MyPage> {
               children: [
                 CircleAvatar(
                   radius: 80, // 원형의 반지름
-                  backgroundImage:
-                      NetworkImage(profilePictureUrl), // 네트워크 URL을 사용하여 이미지 로드
+                  backgroundImage: Provider.of<UserProvider>(context).profile !=
+                          null
+                      ? FileImage(Provider.of<UserProvider>(context).profile!)
+                      : null,
+                  child: Provider.of<UserProvider>(context).profile == null
+                      ? const Icon(Icons.person, size: 80) // 기본 아이콘
+                      : null,
                 ),
                 const SizedBox(height: 20),
                 Text(
