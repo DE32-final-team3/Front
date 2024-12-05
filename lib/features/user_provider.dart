@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'dart:typed_data';
 
 class UserProvider with ChangeNotifier {
   String _id = "";
   String _email = "";
   String _nickname = "";
-  File? _profile;
+  Uint8List? _profile;
 
   // Getter
   String get id => _id;
   String get email => _email;
   String get nickname => _nickname;
-  File? get profile => _profile;
+  Uint8List? get profile => _profile;
 
   // Setter
   void setUserId(String id) {
@@ -29,7 +29,7 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void setUserProfile(File? profile) {
+  void setUserProfile(Uint8List? profile) {
     _profile = profile;
     notifyListeners();
   }

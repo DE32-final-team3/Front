@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:cinetalk/features/api.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -47,9 +48,10 @@ class _EditProfileState extends State<EditProfile> {
         String userId = context.read<UserProvider>().id;
         await UserApi.setProfile(userId, imageFile, context);
 
-        // 프로필 이미지 업데이트
+        // 프로필 이미지 업데이트 (File -> Uint8List 변환)
+        Uint8List imageBytes = await imageFile.readAsBytes();
         Provider.of<UserProvider>(context, listen: false)
-            .setUserProfile(imageFile);
+            .setUserProfile(imageBytes);
       } catch (e) {
         // 오류 처리
         print('이미지 업로드 실패: $e');
@@ -93,7 +95,8 @@ class _EditProfileState extends State<EditProfile> {
     }
 
     // nickname 변경
-    var statusCode = await UserApi.postParameters("nickname", nickname);
+    var statusCode = await UserApi.postParameters(
+        "/user/check/nickname", "nickname", nickname);
     if (statusCode == 200) {
       var res = await UserApi.update("nickname", nickname);
 
@@ -196,7 +199,7 @@ class _EditProfileState extends State<EditProfile> {
                       return CircleAvatar(
                         radius: 80,
                         backgroundImage: userProvider.profile != null
-                            ? FileImage(userProvider.profile!)
+                            ? MemoryImage(userProvider.profile as Uint8List)
                             : null,
                         child: userProvider.profile == null
                             ? const Icon(Icons.person, size: 80)

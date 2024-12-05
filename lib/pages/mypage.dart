@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // pages
@@ -39,10 +40,11 @@ class _MyPageState extends State<MyPage> {
                 child: Column(
               children: [
                 CircleAvatar(
-                  radius: 80, // 원형의 반지름
+                  radius: 80,
                   backgroundImage: Provider.of<UserProvider>(context).profile !=
                           null
-                      ? FileImage(Provider.of<UserProvider>(context).profile!)
+                      ? MemoryImage(Provider.of<UserProvider>(context).profile
+                          as Uint8List)
                       : null,
                   child: Provider.of<UserProvider>(context).profile == null
                       ? const Icon(Icons.person, size: 80) // 기본 아이콘
