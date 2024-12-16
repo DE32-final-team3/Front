@@ -77,11 +77,6 @@ class UserApi {
       // profile image 경로가 있다면 해당 이미지를 provider에 저장
       if (user['profile'] != null && user['profile'].isNotEmpty) {
         Uint8List profileImageBytes = await UserApi.getProfile(user['id']);
-
-        // File profileImage =
-        //     File('${(await getTemporaryDirectory()).path}/profile_image.png')
-        //       ..writeAsBytesSync(profileImageBytes);
-
         userProvider.setUserProfile(profileImageBytes);
       }
       return;
