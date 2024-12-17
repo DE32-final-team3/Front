@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 // pages
 import 'package:cinetalk/pages/mypage.dart';
-import 'package:cinetalk/pages/curation.dart';
+import 'package:cinetalk/pages/curator.dart';
 import 'package:cinetalk/pages/talk.dart';
 import 'package:cinetalk/pages/cinemates.dart';
 import 'package:cinetalk/pages/follow.dart';
@@ -23,7 +23,7 @@ class _PageListState extends State<Pages> {
 
   final List<Widget> _pages = const [
     MyPage(),
-    Curation(),
+    Curator(),
     Talk(),
     Cinemates(),
     Follow()

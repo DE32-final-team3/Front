@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class Curation extends StatelessWidget {
-  const Curation({super.key});
+class Curator extends StatelessWidget {
+  const Curator({super.key});
 
   @override
   Widget build(BuildContext context) {
