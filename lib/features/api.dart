@@ -189,3 +189,44 @@ class UserApi {
     }
   }
 }
+
+class MovieApi {
+  static Future<dynamic> fetchMovies(List<int> movieIds) async {
+    String serverIP = dotenv.env['SERVER_IP']!;
+
+    // 쿼리 파라미터 준비
+    Map<String, List<String>> queryParams = {
+      'movie_ids': movieIds.map((id) => id.toString()).toList(),
+    };
+
+    var url = Uri.http(
+      serverIP,
+      "/movie/list",
+      queryParams,
+    );
+
+    try {
+      // HTTP GET 요청
+      var response = await http.get(url, headers: {
+        'accept': 'application/json',
+        'Accept-Charset': 'utf-8',
+      });
+
+      if (response.statusCode == 200) {
+        // 응답이 성공적인 경우
+        print("response success");
+        var data = jsonDecode(utf8.decode(response.bodyBytes));
+        // 'movies' 키에 해당하는 데이터를 List<Map<String, dynamic>> 형태로 반환
+        return data['movies']; // 반환되는 데이터 구조에 맞게 수정
+      } else {
+        // 응답이 실패한 경우
+        throw Exception(
+            'Failed to load data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // 예외 처리
+      print('HTTP Request failed: $e');
+      return null; // 예외 발생 시 null 반환
+    }
+  }
+}
