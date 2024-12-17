@@ -17,7 +17,7 @@ class Auth {
       String? serverIP = dotenv.env['SERVER_IP']!;
       var url = Uri.http(
         serverIP,
-        '/api/user/validate',
+        '/user/info',
       );
 
       var response = await http.post(
