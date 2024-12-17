@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cinetalk/pages/mypage.dart';
 import 'package:cinetalk/pages/curation.dart';
 import 'package:cinetalk/pages/talk.dart';
-import 'package:cinetalk/pages/cinema.dart';
+import 'package:cinetalk/pages/cinemates.dart';
 import 'package:cinetalk/pages/follow.dart';
 
 class PageList extends StatelessWidget {
@@ -25,7 +25,7 @@ class _PageListState extends State<Pages> {
     MyPage(),
     Curation(),
     Talk(),
-    Cinema(),
+    Cinemates(),
     Follow()
   ];
 
@@ -58,7 +58,7 @@ class _PageListState extends State<Pages> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.family_restroom_outlined),
-            label: 'Cinema',
+            label: 'Cinemates',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite_outlined),

@@ -73,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.blueAccent,
       body: Center(
         child: Text(
-          'CineTalk',
+          'CINEMATE',
           style: TextStyle(
             fontSize: 48,
             fontWeight: FontWeight.bold,

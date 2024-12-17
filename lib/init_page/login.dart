@@ -5,6 +5,7 @@ import 'package:cinetalk/init_page/find_pw.dart';
 import 'package:cinetalk/init_page/sign_up.dart';
 // features
 import 'package:cinetalk/features/api.dart';
+import 'package:cinetalk/features/custom_wigdet.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -54,20 +55,32 @@ class _LoginState extends State<Login> {
           const SnackBar(content: Text('이메일과 비밀번호를 입력해주세요.')),
         );
       } else {
-        var response = await UserApi.login(email, password);
+        CustomWigdet.showLoadingDialog(context);
 
-        if (response) {
-          await UserApi.userInfo(context);
+        try {
+          var response = await UserApi.login(email, password);
+          Navigator.pop(context);
+          if (response) {
+            await UserApi.userInfo(context);
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => PageList()),
-          );
-        } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => PageList()),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("이메일 또는 비밀번호가 일치하지 않습니다.")),
+            );
+            _passwordController.clear();
+          }
+        } catch (e) {
+          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("이메일 또는 비밀번호가 일치하지 않습니다.")),
+            const SnackBar(
+              content: Text("네트워크 에러가 발생했습니다. 다시 시도해주세요."),
+              duration: Duration(seconds: 3),
+            ),
           );
-          _passwordController.clear();
         }
       }
     }
