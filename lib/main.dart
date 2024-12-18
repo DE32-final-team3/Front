@@ -6,6 +6,7 @@ import 'package:cinetalk/init_page/login.dart';
 import 'package:cinetalk/init_page/page_list.dart';
 // features
 import 'package:cinetalk/features/user_provider.dart';
+import 'package:cinetalk/features/movie_provider.dart';
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/auth.dart';
 
@@ -19,8 +20,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => UserProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => UserProvider()),
+        ChangeNotifierProvider(create: (context) => MovieProvider()),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
