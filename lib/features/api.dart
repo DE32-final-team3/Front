@@ -189,6 +189,40 @@ class UserApi {
       );
     }
   }
+
+  static Future<dynamic> getParameters(
+      String path, String param, String value) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.http(
+      serverIP, // 호스트 주소
+      path, // 경로
+      {param: value},
+    );
+
+    var response = await http.get(url, headers: {
+      'accept': 'application/json',
+      'Accept-Charset': 'utf-8',
+    });
+
+    try {
+      if (response.statusCode == 200) {
+        // 응답이 성공적인 경우
+        print("response success");
+        var data = jsonDecode(utf8.decode(response.bodyBytes));
+        // 'movies' 키에 해당하는 데이터를 List<Map<String, dynamic>> 형태로 반환
+        return data; // 반환되는 데이터 구조에 맞게 수정
+      } else {
+        // 응답이 실패한 경우
+        throw Exception(
+            'Failed to load data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // 예외 처리
+      print('HTTP Request failed: $e');
+      return null; // 예외 발생 시 null 반환
+    }
+  }
 }
 
 class MovieApi {
