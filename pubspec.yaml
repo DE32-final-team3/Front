@@ -44,6 +44,8 @@ dependencies:
   mime: ^2.0.0
   http_parser: ^4.0.2
   url_launcher: ^6.3.1
+  web_socket_channel: ^2.3.0
+  bson: ^5.0.5
 
 dev_dependencies:
   flutter_test:

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/user_provider.dart';
+// chatroom.dart 가져오기
+import 'package:cinetalk/pages/chatroom.dart';
 
 class Cinemates extends StatefulWidget {
   const Cinemates({super.key});
@@ -77,12 +79,21 @@ class _CinamatesState extends State<Cinemates> {
                               // 우측 버튼
                               ElevatedButton(
                                 onPressed: () {
-                                  // 버튼 클릭 시 동작
+                                  // 현재 사용자의 닉네임과 선택된 사용자 닉네임 전달
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ChatRoom(
+                                        user1: Provider.of<UserProvider>(context, listen: false).id, // 현재 사용자 id
+                                        user2: user['user_id'], // 클릭된 사용자 id
+                                        user2Nickname: user['nickname'],
+                                      ),
+                                    ),
+                                  );
                                 },
                                 child: const Text('채팅하기'),
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
