@@ -50,7 +50,7 @@ class _PageListState extends State<Pages> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.movie),
-            label: 'Curation',
+            label: 'Curator',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
