@@ -15,7 +15,7 @@ class Auth {
     String? token = await getToken();
     try {
       String? serverIP = dotenv.env['SERVER_IP']!;
-      var url = Uri.http(
+      var url = Uri.https(
         serverIP,
         '/user/info',
       );

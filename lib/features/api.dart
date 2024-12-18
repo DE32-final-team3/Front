@@ -19,7 +19,7 @@ class UserApi {
     try {
       String? serverIP = dotenv.env['SERVER_IP']!;
 
-      var url = Uri.http(
+      var url = Uri.https(
         serverIP, // 호스트 주소
         '/user/login', // 경로
       );
@@ -56,7 +56,7 @@ class UserApi {
 
     try {
       String? serverIP = dotenv.env['SERVER_IP']!;
-      var url = Uri.http(
+      var url = Uri.https(
         serverIP,
         '/user/info',
       );
@@ -91,7 +91,7 @@ class UserApi {
       String path, String param, String value) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 
-    var url = Uri.http(
+    var url = Uri.https(
       serverIP, // 호스트 주소
       path, // 경로
       {param: value},
@@ -104,7 +104,7 @@ class UserApi {
   static Future<int> postBody(String path, Map<String, dynamic> params) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 
-    var url = Uri.http(
+    var url = Uri.https(
       serverIP, // 호스트 주소
       path, // 경로
     );
@@ -126,7 +126,7 @@ class UserApi {
     String? serverIP = dotenv.env['SERVER_IP']!;
     String? token = await Auth.getToken();
 
-    var url = Uri.http(serverIP, '/user/update');
+    var url = Uri.https(serverIP, '/user/update');
     var response = await http.put(
       url,
       headers: {
@@ -142,7 +142,7 @@ class UserApi {
   static Future<Uint8List> getProfile(String id) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 
-    var url = Uri.http(
+    var url = Uri.https(
       serverIP, // 호스트 주소
       '/user/profile/get', // 경로
       {"id": id},
@@ -156,7 +156,7 @@ class UserApi {
       String id, File imageFile, BuildContext context) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 
-    var url = Uri.http(
+    var url = Uri.https(
       serverIP,
       '/user/profile/upload',
       {"id": id},
@@ -194,7 +194,7 @@ class UserApi {
       String path, String param, String value) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 
-    var url = Uri.http(
+    var url = Uri.https(
       serverIP, // 호스트 주소
       path, // 경로
       {param: value},
@@ -234,7 +234,7 @@ class MovieApi {
       'movie_ids': movieIds.map((id) => id.toString()).toList(),
     };
 
-    var url = Uri.http(
+    var url = Uri.https(
       serverIP,
       "/movie/list",
       queryParams,
