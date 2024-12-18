@@ -73,6 +73,7 @@ class UserApi {
       userProvider.setUserId(user['id']);
       userProvider.setUserEmail(user['email']);
       userProvider.setUserNickname(user['nickname']);
+      userProvider.setMovieList(user['movie_list']);
 
       // profile image 경로가 있다면 해당 이미지를 provider에 저장
       if (user['profile'] != null && user['profile'].isNotEmpty) {
