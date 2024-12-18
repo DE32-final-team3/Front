@@ -20,6 +20,9 @@ class _EditProfileState extends State<EditProfile> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  final _passwordFocusNode = FocusNode();
+  final _confirmPasswordFocusNode = FocusNode();
+
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
 
@@ -164,6 +167,8 @@ class _EditProfileState extends State<EditProfile> {
     _nicknameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _passwordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
     super.dispose();
   }
 
@@ -219,14 +224,15 @@ class _EditProfileState extends State<EditProfile> {
             Row(
               children: [
                 Expanded(
-                    child: TextFormField(
-                  controller: _nicknameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nickname',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
-                  ),
-                )),
+                  child: TextFormField(
+                      controller: _nicknameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nickname',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                      onFieldSubmitted: (_) => _validateNickname()),
+                ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                     onPressed: () {
@@ -248,6 +254,7 @@ class _EditProfileState extends State<EditProfile> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: !_passwordVisible,
+                    focusNode: _passwordFocusNode,
                     decoration: InputDecoration(
                       labelText: 'Password',
                       border: const OutlineInputBorder(),
@@ -266,12 +273,18 @@ class _EditProfileState extends State<EditProfile> {
                       ),
                     ),
                     validator: _validatePassword,
+                    onFieldSubmitted: (_) {
+                      // Enter 키를 누르면 "Confirm Password"로 이동
+                      FocusScope.of(context)
+                          .requestFocus(_confirmPasswordFocusNode);
+                    },
                   ),
                   const SizedBox(height: 10),
                   // 비밀번호 확인 입력란
                   TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: !_confirmPasswordVisible,
+                    focusNode: _confirmPasswordFocusNode,
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
                       border: const OutlineInputBorder(),
@@ -290,6 +303,7 @@ class _EditProfileState extends State<EditProfile> {
                       ),
                     ),
                     validator: _validateConfirmPassword,
+                    onFieldSubmitted: (_) => _updatePassword(),
                   ),
                   const SizedBox(height: 10),
                   Center(

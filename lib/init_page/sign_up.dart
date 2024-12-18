@@ -17,6 +17,9 @@ class _SignUpState extends State<SignUp> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  final _passwordFocusNode = FocusNode();
+  final _confirmPasswordFocusNode = FocusNode();
+
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
 
@@ -230,6 +233,7 @@ class _SignUpState extends State<SignUp> {
                       });
                     },
                     keyboardType: TextInputType.emailAddress,
+                    onFieldSubmitted: (_) => _validateEmail(),
                   )),
                   const SizedBox(width: 8),
                   ElevatedButton(
@@ -260,6 +264,7 @@ class _SignUpState extends State<SignUp> {
                           _isNicknameChecked = false;
                         });
                       },
+                      onFieldSubmitted: (_) => _validateNickname(),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -279,6 +284,7 @@ class _SignUpState extends State<SignUp> {
               // 비밀번호 입력
               TextFormField(
                 controller: _passwordController,
+                focusNode: _passwordFocusNode,
                 obscureText: !_passwordVisible,
                 decoration: InputDecoration(
                   labelText: 'Password',
@@ -298,11 +304,16 @@ class _SignUpState extends State<SignUp> {
                   ),
                 ),
                 validator: _validatePassword,
+                onFieldSubmitted: (_) {
+                  FocusScope.of(context)
+                      .requestFocus(_confirmPasswordFocusNode);
+                },
               ),
               const SizedBox(height: 16),
               // 비밀번호 확인 입력
               TextFormField(
                 controller: _confirmPasswordController,
+                focusNode: _confirmPasswordFocusNode,
                 obscureText: !_confirmPasswordVisible,
                 decoration: InputDecoration(
                   labelText: 'Confirm Password',
@@ -322,6 +333,9 @@ class _SignUpState extends State<SignUp> {
                   ),
                 ),
                 validator: _validateConfirmPassword,
+                onFieldSubmitted: (_) {
+                  _isEmailChecked && _isNicknameChecked ? _signUp : null;
+                },
               ),
               const SizedBox(height: 16),
               // 회원가입 버튼

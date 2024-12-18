@@ -100,15 +100,15 @@ class _LoginState extends State<Login> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: _validateEmail, // Add the validator for email
-              ),
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.email),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: _validateEmail, // Add the validator for email
+                  onFieldSubmitted: (_) => _login()), // 엔터 키가 눌렸을 때 로그인 시도
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _passwordController,
@@ -131,6 +131,7 @@ class _LoginState extends State<Login> {
                   ),
                 ),
                 validator: _validatePassword,
+                onFieldSubmitted: (_) => _login(), // 엔터 키가 눌렸을 때 로그인 시도
               ),
               const SizedBox(height: 16.0),
               // 로그인 버튼
