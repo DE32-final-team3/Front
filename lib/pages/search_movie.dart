@@ -133,11 +133,7 @@ class _SearchMovieState extends State<SearchMovie> {
                                 child: ListBody(
                                   children:
                                       movieProvider.movieList.map((movie) {
-                                    return Card(
-                                      child: ListTile(
-                                        title: Text(movie['title']),
-                                      ),
-                                    );
+                                    return CustomWidget.miniCard(movie);
                                   }).toList(),
                                 ),
                               ),
