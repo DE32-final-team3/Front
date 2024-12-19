@@ -11,4 +11,9 @@ class MovieProvider with ChangeNotifier {
     _movieList = movieList;
     notifyListeners();
   }
+
+  Future<void> clearMovie() async {
+    _movieList = [];
+    notifyListeners();
+  }
 }

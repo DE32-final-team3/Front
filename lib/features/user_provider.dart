@@ -40,4 +40,13 @@ class UserProvider with ChangeNotifier {
     _movieList = List<int>.from(movieList);
     notifyListeners();
   }
+
+  Future<void> clearUser() async {
+    _id = "";
+    _email = "";
+    _nickname = "";
+    _profile = null;
+    _movieList = [];
+    notifyListeners();
+  }
 }

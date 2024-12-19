@@ -1,10 +1,13 @@
 import 'dart:typed_data';
+import 'package:cinetalk/features/movie_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // pages
 import 'package:cinetalk/pages/edit_profile.dart';
+import 'package:cinetalk/main.dart';
 // features
 import 'package:cinetalk/features/user_provider.dart';
+import 'package:cinetalk/features/auth.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});
@@ -68,6 +71,20 @@ class _MyPageState extends State<MyPage> {
                     color: Colors.grey, // 이메일 텍스트 색상
                   ),
                 ),
+                const SizedBox(height: 20), // 이메일과 로그아웃 사이 여백
+                ElevatedButton(
+                  onPressed: () async {
+                    await Provider.of<UserProvider>(context, listen: false)
+                        .clearUser();
+                    await Provider.of<MovieProvider>(context, listen: false)
+                        .clearMovie();
+                    Auth.clearToken();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => MyApp()),
+                    );
+                  },
+                  child: Text("Logout"),
+                )
               ],
             ))
           ],
