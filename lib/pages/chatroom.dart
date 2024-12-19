@@ -86,17 +86,17 @@ class _ChatRoomState extends State<ChatRoom> { // 클래스 이름 수정에 따
   }
 
   void _sendMessage() {
-    if (_controller.text.trim().isEmpty) return;
+    if (_controller.text.isNotEmpty) {
+      final message = _controller.text.trim();
+      _controller.clear();
 
-    final message = _controller.text.trim();
-    _channel.sink.add(message);
-
-    try {
-      _channel.sink.add(message);
-      _focusNode.requestFocus();
-      _scrollToBottom();
-    } catch (e) {
-      print("Error sending message: $e");
+      try {
+        _channel.sink.add(message); 
+        _focusNode.requestFocus(); 
+        _scrollToBottom(); 
+      } catch (e) {
+        print("Error sending message: $e");
+      }
     }
   }
 
