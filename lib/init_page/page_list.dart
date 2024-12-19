@@ -4,7 +4,6 @@ import 'package:cinetalk/pages/mypage.dart';
 import 'package:cinetalk/pages/curator.dart';
 import 'package:cinetalk/pages/talk.dart';
 import 'package:cinetalk/pages/cinemates.dart';
-import 'package:cinetalk/pages/follow.dart';
 
 class PageList extends StatelessWidget {
   @override
@@ -21,13 +20,7 @@ class Pages extends StatefulWidget {
 class _PageListState extends State<Pages> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    MyPage(),
-    Curator(),
-    Talk(),
-    Cinemates(),
-    Follow()
-  ];
+  final List<Widget> _pages = const [MyPage(), Curator(), Talk(), Cinemates()];
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +52,6 @@ class _PageListState extends State<Pages> {
           BottomNavigationBarItem(
             icon: Icon(Icons.family_restroom_outlined),
             label: 'Cinemates',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_outlined),
-            label: 'Follow',
           ),
         ],
       ),
