@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 // features
+import 'package:cinetalk/features/movie_provider.dart';
 import 'package:cinetalk/features/user_provider.dart';
 import 'package:cinetalk/features/auth.dart';
 
@@ -70,16 +71,33 @@ class UserApi {
 
       // provider에 user 정보 저장
       final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final movieProvider = Provider.of<MovieProvider>(context, listen: false);
+
       userProvider.setUserId(user['id']);
       userProvider.setUserEmail(user['email']);
       userProvider.setUserNickname(user['nickname']);
       userProvider.setMovieList(user['movie_list']);
+
+      // 사용자 영화 리스트 처리
+      if (user['movie_list'] != null && user['movie_list'].isNotEmpty) {
+        List<dynamic> movies =
+            await MovieApi.fetchMovies(List<int>.from(user['movie_list']));
+        // movies를 List<Map<String, dynamic>>으로 변환
+        List<Map<String, dynamic>> formattedMovies =
+            movies.cast<Map<String, dynamic>>();
+
+        // MovieProvider에 영화 데이터 설정
+        movieProvider.setMovieList(formattedMovies);
+      } else {
+        movieProvider.setMovieList([]); // 빈 리스트 설정
+      }
 
       // profile image 경로가 있다면 해당 이미지를 provider에 저장
       if (user['profile'] != null && user['profile'].isNotEmpty) {
         Uint8List profileImageBytes = await UserApi.getProfile(user['id']);
         userProvider.setUserProfile(profileImageBytes);
       }
+
       return;
     } catch (e) {
       print("Error: $e");
@@ -178,10 +196,6 @@ class UserApi {
     // 응답 처리
     if (response.statusCode == 200) {
       Uint8List profileImageBytes = await UserApi.getProfile(id);
-
-      // File profileImage =
-      //     File('${(await getTemporaryDirectory()).path}/profile_image.png')
-      //       ..writeAsBytesSync(profileImageBytes);
       return;
     } else {
       throw Exception(
@@ -233,7 +247,6 @@ class MovieApi {
     Map<String, List<String>> queryParams = {
       'movie_ids': movieIds.map((id) => id.toString()).toList(),
     };
-
     var url = Uri.https(
       serverIP,
       "/movie/list",

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/user_provider.dart';
+import 'package:cinetalk/features/custom_widget.dart';
 
 class Cinemates extends StatefulWidget {
   const Cinemates({super.key});
@@ -39,8 +40,12 @@ class _CinamatesState extends State<Cinemates> {
     return Scaffold(
       appBar: AppBar(title: const Text('Cinemates')),
       body: similarUser == null
-          ? const Center(
-              child: CircularProgressIndicator(), // 로딩 중 상태
+          ? Builder(
+              builder: (context) {
+                // CustomWidget 사용
+                CustomWidget.showLoadingDialog(context);
+                return const SizedBox.shrink(); // 빈 공간 반환
+              },
             )
           : similarUser!.isEmpty
               ? const Center(
