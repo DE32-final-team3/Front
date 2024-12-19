@@ -19,6 +19,8 @@ class MyPage extends StatefulWidget {
 class _MyPageState extends State<MyPage> {
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+
     return Scaffold(
       appBar: AppBar(title: const Text('My Page')),
       body: Padding(
@@ -44,19 +46,16 @@ class _MyPageState extends State<MyPage> {
               children: [
                 CircleAvatar(
                   radius: 80,
-                  backgroundImage: Provider.of<UserProvider>(context).profile !=
-                          null
-                      ? MemoryImage(Provider.of<UserProvider>(context).profile
-                          as Uint8List)
+                  backgroundImage: userProvider.profile != null
+                      ? MemoryImage(userProvider.profile as Uint8List)
                       : null,
-                  child: Provider.of<UserProvider>(context).profile == null
+                  child: userProvider.profile == null
                       ? const Icon(Icons.person, size: 80) // 기본 아이콘
                       : null,
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  Provider.of<UserProvider>(context)
-                      .nickname, // provider 사용해서 data load
+                  userProvider.nickname, // provider 사용해서 data load
                   style: const TextStyle(
                     fontSize: 35, // 폰트 크기
                     fontWeight: FontWeight.bold, // 볼드체
@@ -65,7 +64,7 @@ class _MyPageState extends State<MyPage> {
                 const SizedBox(height: 5), // 닉네임과 이메일 사이 여백
                 // 이메일
                 Text(
-                  Provider.of<UserProvider>(context).email,
+                  userProvider.email,
                   style: const TextStyle(
                     fontSize: 18, // 폰트 크기
                     color: Colors.grey, // 이메일 텍스트 색상
@@ -79,7 +78,7 @@ class _MyPageState extends State<MyPage> {
                     await Provider.of<MovieProvider>(context, listen: false)
                         .clearMovie();
                     Auth.clearToken();
-                    Navigator.of(context).push(
+                    Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (context) => MyApp()),
                     );
                   },

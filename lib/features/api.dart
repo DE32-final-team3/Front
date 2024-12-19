@@ -64,7 +64,6 @@ class UserApi {
 
       var response = await http.post(url, headers: {
         'Authorization': 'Bearer $token',
-        'Accept-Charset': 'utf-8',
       });
 
       Map<String, dynamic> user = jsonDecode(utf8.decode(response.bodyBytes));
@@ -216,7 +215,6 @@ class UserApi {
 
     var response = await http.get(url, headers: {
       'accept': 'application/json',
-      'Accept-Charset': 'utf-8',
     });
 
     try {
@@ -252,7 +250,6 @@ class UserApi {
     try {
       var response = await http.get(url, headers: {
         'accept': 'application/json',
-        'Accept-Charset': 'utf-8',
       });
 
       if (response.statusCode == 200) {
@@ -288,7 +285,6 @@ class MovieApi {
       // HTTP GET 요청
       var response = await http.get(url, headers: {
         'accept': 'application/json',
-        'Accept-Charset': 'utf-8',
       });
 
       if (response.statusCode == 200) {
@@ -324,7 +320,6 @@ class MovieApi {
     try {
       final response = await http.get(url, headers: {
         'Accept': 'application/json;charset=UTF-8',
-        'Accept-Charset': 'utf-8'
       });
 
       if (response.statusCode == 200) {
