@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class CustomWigdet {
+class CustomWidget {
   static void showLoadingDialog(BuildContext context) {
     showDialog(
       context: context,
       barrierDismissible: false, // 다이얼로그 외부를 터치해도 닫히지 않도록 설정
       builder: (BuildContext context) {
-        return const Center(
-          child: CircularProgressIndicator(),
+        return Center(
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+          ),
         );
       },
     );

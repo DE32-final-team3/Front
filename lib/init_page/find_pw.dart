@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cinetalk/init_page/login.dart';
 // features
 import 'package:cinetalk/features/api.dart';
-import 'package:cinetalk/features/custom_wigdet.dart';
+import 'package:cinetalk/features/custom_widget.dart';
 
 class FindPassword extends StatefulWidget {
   const FindPassword({super.key});
@@ -34,7 +34,7 @@ class _FindPasswordState extends State<FindPassword> {
       return;
     }
 
-    CustomWigdet.showLoadingDialog(context);
+    CustomWidget.showLoadingDialog(context);
 
     try {
       String email = _emailController.text;

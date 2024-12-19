@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/user_provider.dart';
-import 'package:cinetalk/features/custom_wigdet.dart';
+import 'package:cinetalk/features/custom_widget.dart';
 
 class Curator extends StatefulWidget {
   const Curator({super.key});
@@ -59,7 +59,7 @@ class _CuratorState extends State<Curator> {
               var movie = movieList![index];
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: CustomWigdet.movieCard(movie),
+                child: CustomWidget.movieCard(movie),
               );
             },
           );
