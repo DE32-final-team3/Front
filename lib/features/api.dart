@@ -101,6 +101,37 @@ class UserApi {
     return response.statusCode;
   }
 
+  static Future<dynamic> getParametersChat(
+      String path, String param, String value) async {
+    String? chatIP = dotenv.env['CHAT_IP']!;
+
+    // URL 구성: 명시적으로 포트 8000 추가
+    var url = Uri.http(
+      '$chatIP:8000', // CHAT_IP와 포트를 결합
+      path.startsWith('/') ? path.substring(1) : path, // 경로 앞 슬래시 제거
+      {param: value}, // 쿼리 파라미터
+    );
+
+    try {
+      var response = await http.get(url, headers: {
+        'accept': 'application/json',
+        'Accept-Charset': 'utf-8',
+      });
+
+      if (response.statusCode == 200) {
+        print("Response success from CHAT_IP");
+        var data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data; // 성공적으로 데이터를 반환
+      } else {
+        throw Exception(
+            'Failed to load data from CHAT_IP. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('HTTP Request failed on CHAT_IP: $e');
+      return null; // 예외 발생 시 null 반환
+    }
+  }
+
   static Future<int> postBody(String path, Map<String, dynamic> params) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 

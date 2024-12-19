@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // 사용자 ID 가져오기 위해 추가
 import 'package:cinetalk/features/api.dart'; // FastAPI 호출
@@ -22,35 +24,61 @@ class _TalkState extends State<Talk> {
   }
 
   Future<void> _fetchChatRooms() async {
-    try {
-      // 현재 사용자의 ID 가져오기
-      String userId = Provider.of<UserProvider>(context, listen: false).id;
+  try {
+    // 현재 사용자의 ID 가져오기
+    String userId = Provider.of<UserProvider>(context, listen: false).id;
 
-      // FastAPI 호출
-      var response = await UserApi.getParameters(
-        '/api/chat_rooms/$userId', // API 경로
-        '', // 쿼리 파라미터 없음
-        '', // 빈 값 전달
-      );
+    // FastAPI 호출
+    var response = await UserApi.getParametersChat(
+      '/api/chat_rooms/$userId/recent_messages', // 최근 메시지를 포함한 API 경로
+      '',
+      '',
+    );
 
-      if (response['status'] == 'success') {
+    if (response != null && response['status'] == 'success') {
         var fetchedChatRooms = response['data'];
 
         // chatList 업데이트
+        List<Map<String, dynamic>> updatedChatList = [];
+        for (var room in fetchedChatRooms) {
+          String partnerId = room['partner_id'];
+          String partnerNickname = room['partner_nickname'] ?? "Unknown";
+          String lastMessage = room['last_message']['text'] ?? "No messages yet";
+
+          // 프로필 이미지 가져오기
+          Uint8List profileImageBytes;
+          try {
+            profileImageBytes = await UserApi.getProfile(partnerId);
+          } catch (e) {
+            print("Error fetching profile image for $partnerId: $e");
+            profileImageBytes = Uint8List(0); // 기본 빈 값
+          }
+
+          updatedChatList.add({
+            "profileImage": profileImageBytes, // 프로필 이미지 바이트 배열
+            "nickname": partnerNickname,
+            "lastMessage": lastMessage,
+            "timestamp": room['last_message']['timestamp'],
+            "user_id": partnerId,
+            "unreadCount": 0, // 미확인 메시지 기본값
+          });
+        }
+
+        // 타임스탬프 기준 정렬
+        updatedChatList.sort((a, b) {
+          if (a['timestamp'] == null && b['timestamp'] == null) return 0;
+          if (a['timestamp'] == null) return 1;
+          if (b['timestamp'] == null) return -1;
+          return b['timestamp'].compareTo(a['timestamp']);
+        });
+
+        // 상태 업데이트
         setState(() {
-          chatList = (fetchedChatRooms as List<dynamic>).map((room) {
-            return {
-              "profileImage": "", // 프로필 이미지는 없으므로 기본값
-              "nickname": room['partner_nickname'] ?? "Unknown", // 상대방 닉네임
-              "lastMessage": "최근 메시지가 없습니다.", // 마지막 메시지
-              "user_id": room['partner_id'], // 상대방 ID
-              "unreadCount": 0, // 미확인 메시지
-            };
-          }).toList();
+          chatList = updatedChatList;
           isLoading = false;
         });
       } else {
-        throw Exception('Failed to load chat rooms');
+        throw Exception('Failed to load chat rooms: ${response?['message']}');
       }
     } catch (e) {
       print("Error fetching chat rooms: $e");
@@ -122,8 +150,9 @@ class _TalkState extends State<Talk> {
                     onLongPress: () {
                       showDeleteConfirmationDialog(index);
                     },
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      // 채팅방 페이지로 이동
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ChatRoom(
@@ -133,9 +162,11 @@ class _TalkState extends State<Talk> {
                           ),
                         ),
                       );
+                      // 돌아오면 목록 새로고침
+                      _fetchChatRooms();
                     },
                     child: ChatBox(
-                      profileImageUrl: chatList[index]['profileImage']!,
+                      profileImage: chatList[index]['profileImage']!,
                       nickname: chatList[index]['nickname']!,
                       lastMessage: chatList[index]['lastMessage']!,
                       unreadCount: chatList[index]['unreadCount'],
@@ -149,13 +180,13 @@ class _TalkState extends State<Talk> {
 }
 
 class ChatBox extends StatelessWidget {
-  final String profileImageUrl;
+  final Uint8List profileImage; // 수정: Uint8List 타입
   final String nickname;
   final String lastMessage;
   final int unreadCount;
 
   const ChatBox({
-    required this.profileImageUrl,
+    required this.profileImage,
     required this.nickname,
     required this.lastMessage,
     required this.unreadCount,
@@ -168,11 +199,14 @@ class ChatBox extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 5),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: profileImageUrl.isNotEmpty
-              ? NetworkImage(profileImageUrl)
+          backgroundImage: profileImage.isNotEmpty
+              ? MemoryImage(profileImage) // Uint8List 데이터를 이미지로 변환
               : const AssetImage('assets/default_profile.png') as ImageProvider,
         ),
-        title: Text(nickname),
+        title: Text(
+          nickname,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold), // Bold 처리
+        ),
         subtitle: Text(lastMessage.isEmpty ? '새 메시지가 없습니다.' : lastMessage),
         trailing: unreadCount > 0
             ? CircleAvatar(
