@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/custom_widget.dart';
 import 'package:cinetalk/features/movie_provider.dart';
-import 'package:provider/provider.dart';
 
 class SearchMovie extends StatefulWidget {
   const SearchMovie({super.key});
@@ -128,7 +128,7 @@ class _SearchMovieState extends State<SearchMovie> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: Text('선택한 영화 목록록'),
+                              title: Text('선택한 영화 목록'),
                               content: SingleChildScrollView(
                                 child: ListBody(
                                   children:

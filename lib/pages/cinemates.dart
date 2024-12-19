@@ -1,10 +1,10 @@
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
+// pages
+import 'package:cinetalk/pages/chatroom.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/user_provider.dart';
-// chatroom.dart 가져오기
-import 'package:cinetalk/pages/chatroom.dart';
 
 class Cinemates extends StatefulWidget {
   const Cinemates({super.key});

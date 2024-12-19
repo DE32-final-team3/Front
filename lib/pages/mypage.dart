@@ -1,11 +1,11 @@
 import 'dart:typed_data';
-import 'package:cinetalk/features/movie_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // pages
 import 'package:cinetalk/pages/edit_profile.dart';
 import 'package:cinetalk/main.dart';
 // features
+import 'package:cinetalk/features/movie_provider.dart';
 import 'package:cinetalk/features/user_provider.dart';
 import 'package:cinetalk/features/auth.dart';
 

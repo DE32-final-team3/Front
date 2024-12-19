@@ -1,11 +1,11 @@
 import 'dart:typed_data';
-import 'package:cinetalk/features/api.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 // features
 import 'package:cinetalk/features/user_provider.dart';
+import 'package:cinetalk/features/api.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});

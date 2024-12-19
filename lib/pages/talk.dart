@@ -1,7 +1,7 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // 사용자 ID 가져오기 위해 추가
+// features
 import 'package:cinetalk/features/api.dart'; // FastAPI 호출
 import 'package:cinetalk/features/user_provider.dart'; // 사용자 정보 관리
 import 'package:cinetalk/pages/chatroom.dart';

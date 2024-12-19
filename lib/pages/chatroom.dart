@@ -49,7 +49,7 @@ class _ChatRoomState extends State<ChatRoom> {
   }
 
   void _connectWebSocket() {
-    String websocketIP = dotenv.env['WEBSOCKET_IP']!;
+    String websocketIP = dotenv.env['CHAT_IP']!;
     _channel = WebSocketChannel.connect(
       Uri.parse('wss://$websocketIP/ws/${widget.user1}/${widget.user2}'),
     );

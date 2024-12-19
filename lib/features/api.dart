@@ -243,8 +243,8 @@ class UserApi {
     String? chatIP = dotenv.env['CHAT_IP']!;
 
     // URL 구성: 명시적으로 포트 8000 추가
-    var url = Uri.http(
-      '$chatIP:8000', // CHAT_IP와 포트를 결합
+    var url = Uri.https(
+      '$chatIP', // CHAT_IP와 포트를 결합
       path.startsWith('/') ? path.substring(1) : path, // 경로 앞 슬래시 제거
       {param: value}, // 쿼리 파라미터
     );
