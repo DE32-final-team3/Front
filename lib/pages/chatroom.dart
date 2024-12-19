@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-class ChatRoom extends StatefulWidget { // 클래스 이름 수정
+class ChatRoom extends StatefulWidget {
+  // 클래스 이름 수정
   final String user1;
   final String user2;
   final String user2Nickname;
@@ -18,14 +18,14 @@ class ChatRoom extends StatefulWidget { // 클래스 이름 수정
   _ChatRoomState createState() => _ChatRoomState();
 }
 
-class _ChatRoomState extends State<ChatRoom> { // 클래스 이름 수정에 따른 변경
+class _ChatRoomState extends State<ChatRoom> {
+  // 클래스 이름 수정에 따른 변경
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   final _scrollController = ScrollController();
   late WebSocketChannel _channel;
   final List<Map<String, String>> _messages = [];
   String _statusMessage = 'Connecting to server...';
-  String? servIP = dotenv.env['CHAT_IP'];
   bool _isConnected = true;
 
   @override
@@ -35,18 +35,22 @@ class _ChatRoomState extends State<ChatRoom> { // 클래스 이름 수정에 따
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
+    // 스크롤 이동 함수
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   void _connectWebSocket() {
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://${servIP}:8000/ws/${widget.user1}/${widget.user2}'),
+      Uri.parse(
+          'wss://websocket.cine-mate.site/ws/${widget.user1}/${widget.user2}'),
     );
 
     _channel.stream.listen(
@@ -87,18 +91,82 @@ class _ChatRoomState extends State<ChatRoom> { // 클래스 이름 수정에 따
 
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
-      final message = _controller.text.trim();
+      final message = _controller.text;
       _controller.clear();
 
       try {
-        _channel.sink.add(message); 
-        _focusNode.requestFocus(); 
-        _scrollToBottom(); 
+        _channel.sink.add(message);
+        _focusNode.requestFocus(); // 메시지 전송 후 Focus 다시 설정
+        _scrollToBottom();
       } catch (e) {
         print("Error sending message: $e");
       }
     }
   }
+
+  // Widget _buildProfileImage({double radius = 20}) {
+  //   return CircleAvatar(
+  //     radius: radius,
+  //     backgroundColor: Colors.grey[300],
+  //     child: ClipOval(
+  //       child: Image.asset(
+  //         'assets/default_profile.jpg',
+  //         width: radius * 2,
+  //         height: radius * 2,
+  //         fit: BoxFit.cover,
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // void _showOpponentProfileDialog(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return Dialog(
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(20.0),
+  //         ),
+  //         child: Container(
+  //           padding: const EdgeInsets.all(20),
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               _buildProfileImage(radius: 50),
+  //               const SizedBox(height: 16),
+  //               Text(
+  //                 widget.user2Nickname,
+  //                 style: const TextStyle(
+  //                   fontSize: 24,
+  //                   fontWeight: FontWeight.bold,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 20),
+  //               ElevatedButton(
+  //                 style: ElevatedButton.styleFrom(
+  //                   backgroundColor: const Color.fromARGB(255, 145, 115, 214),
+  //                   shape: RoundedRectangleBorder(
+  //                     borderRadius: BorderRadius.circular(30),
+  //                   ),
+  //                 ),
+  //                 onPressed: () {
+  //                   Navigator.of(context).pop();
+  //                 },
+  //                 child: const Padding(
+  //                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+  //                   child: Text(
+  //                     '닫기',
+  //                     style: TextStyle(fontSize: 16, color: Colors.white),
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   @override
   void dispose() {
@@ -117,7 +185,8 @@ class _ChatRoomState extends State<ChatRoom> { // 클래스 이름 수정에 따
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('${widget.user2Nickname}님과의 채팅'),
+          title: Text(widget.user2Nickname), // 중앙에 닉네임 표시
+          centerTitle: true, // 닉네임을 정중앙으로 배치
           backgroundColor: const Color.fromARGB(255, 145, 115, 214),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -126,17 +195,15 @@ class _ChatRoomState extends State<ChatRoom> { // 클래스 이름 수정에 따
             },
           ),
           actions: [
-            Icon(
-              _isConnected ? Icons.link : Icons.link_off,
-              color: _isConnected ? Colors.green : Colors.red,
-            ),
             IconButton(
               icon: const Icon(Icons.power_settings_new),
               color: _isConnected ? Colors.green : Colors.red,
               onPressed: _isConnected ? _disconnectWebSocket : null,
             ),
+            const SizedBox(width: 15),
           ],
         ),
+        backgroundColor: const Color.fromARGB(255, 193, 178, 227),
         body: Column(
           children: [
             Padding(
@@ -162,35 +229,25 @@ class _ChatRoomState extends State<ChatRoom> { // 클래스 이름 수정에 따
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (!isUser)
+                          if (!isUser) ...[
                             CircleAvatar(
-                              backgroundColor: Colors.blueGrey,
-                              child: Text(
-                                message['sender']![0].toUpperCase(),
-                                style: const TextStyle(color: Colors.white),
-                              ),
+                              backgroundColor: Colors.grey[300],
+                              child: const Icon(Icons.person), // 기본 프로필 이미지
                             ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: isUser
-                                    ? Colors.blue
-                                    : const Color.fromARGB(255, 255, 255, 255),
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    message['message']!,
-                                    style: TextStyle(
-                                      color:
-                                          isUser ? Colors.white : Colors.black,
-                                    ),
-                                  ),
-                                ],
+                            const SizedBox(width: 8), // 프로필 사진과 메시지 간격
+                          ],
+                          Container(
+                            decoration: BoxDecoration(
+                              color: isUser
+                                  ? Colors.blue
+                                  : const Color.fromARGB(255, 255, 255, 255),
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            padding: const EdgeInsets.all(10),
+                            child: Text(
+                              message['message']!,
+                              style: TextStyle(
+                                color: isUser ? Colors.white : Colors.black,
                               ),
                             ),
                           ),

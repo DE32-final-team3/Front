@@ -127,9 +127,12 @@ class _TalkState extends State<Talk> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => ChatRoom(
-                            user1: Provider.of<UserProvider>(context, listen: false).id, // 현재 사용자 ID
+                            user1: Provider.of<UserProvider>(context,
+                                    listen: false)
+                                .id, // 현재 사용자 ID
                             user2: chatList[index]['user_id'], // 상대방 사용자 ID
-                            user2Nickname: chatList[index]['nickname'], // 상대방 닉네임
+                            user2Nickname: chatList[index]
+                                ['nickname'], // 상대방 닉네임
                           ),
                         ),
                       );

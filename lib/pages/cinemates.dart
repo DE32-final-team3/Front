@@ -65,26 +65,31 @@ class _CinamatesState extends State<Cinemates> {
                         child: Padding(
                           padding: const EdgeInsets.all(16.0), // 카드 내부 여백
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // 닉네임 텍스트
-                              Text(
-                                user['nickname'],
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                              CircleAvatar(
+                                backgroundColor: Colors.grey[300],
+                                child: const Icon(Icons.person), // 기본 프로필 이미지
+                              ),
+                              const SizedBox(width: 10), // 프로필 사진과 텍스트 간격
+                              Expanded(
+                                child: Text(
+                                  user['nickname'],
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-
-                              // 우측 버튼
                               ElevatedButton(
                                 onPressed: () {
-                                  // 현재 사용자의 닉네임과 선택된 사용자 닉네임 전달
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => ChatRoom(
-                                        user1: Provider.of<UserProvider>(context, listen: false).id, // 현재 사용자 id
+                                        user1: Provider.of<UserProvider>(
+                                                context,
+                                                listen: false)
+                                            .id, // 현재 사용자 id
                                         user2: user['user_id'], // 클릭된 사용자 id
                                         user2Nickname: user['nickname'],
                                       ),
@@ -93,7 +98,8 @@ class _CinamatesState extends State<Cinemates> {
                                 },
                                 child: const Text('채팅하기'),
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 10),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
