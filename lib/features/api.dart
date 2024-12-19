@@ -237,6 +237,37 @@ class UserApi {
       return null; // 예외 발생 시 null 반환
     }
   }
+
+  static Future<dynamic> getParametersChat(
+      String path, String param, String value) async {
+    String? chatIP = dotenv.env['CHAT_IP']!;
+
+    // URL 구성: 명시적으로 포트 8000 추가
+    var url = Uri.http(
+      '$chatIP:8000', // CHAT_IP와 포트를 결합
+      path.startsWith('/') ? path.substring(1) : path, // 경로 앞 슬래시 제거
+      {param: value}, // 쿼리 파라미터
+    );
+
+    try {
+      var response = await http.get(url, headers: {
+        'accept': 'application/json',
+        'Accept-Charset': 'utf-8',
+      });
+
+      if (response.statusCode == 200) {
+        print("Response success from CHAT_IP");
+        var data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data; // 성공적으로 데이터를 반환
+      } else {
+        throw Exception(
+            'Failed to load data from CHAT_IP. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('HTTP Request failed on CHAT_IP: $e');
+      return null; // 예외 발생 시 null 반환
+    }
+  }
 }
 
 class MovieApi {
@@ -276,5 +307,38 @@ class MovieApi {
       print('HTTP Request failed: $e');
       return null; // 예외 발생 시 null 반환
     }
+  }
+
+  static Future<List<dynamic>> searchMovies(String query) async {
+    String serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.https(
+        serverIP, // 호스트 주소
+        '/tmdb/search', // 경로
+        {
+          'q': query.replaceAll(' ', ''), // 쿼리 매개변수 (공백 제거)
+          'limit': '10', // 한 번에 가져올 영화 수
+          'page': '1', // 페이지 번호
+        });
+
+    try {
+      final response = await http.get(url, headers: {
+        'Accept': 'application/json;charset=UTF-8',
+        'Accept-Charset': 'utf-8'
+      });
+
+      if (response.statusCode == 200) {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = jsonDecode(decodedBody);
+        print(data['result']);
+
+        return data['results']; // 검색된 영화 리스트 업데이트
+      } else {
+        throw Exception('Failed to load movies');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+    return [];
   }
 }

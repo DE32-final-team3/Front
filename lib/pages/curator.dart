@@ -42,7 +42,7 @@ class _CuratorState extends State<Curator> {
             itemBuilder: (context, index) {
               var movie = movieList[index];
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: CustomWidget.movieCard(movie),
               );
             },

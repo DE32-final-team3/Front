@@ -1,216 +1,286 @@
 import 'package:flutter/material.dart';
-
-// 채팅 메시지 모델 (메시지와 시간을 저장)
-class ChatMessage {
-  final String message;
-  final String time;
-
-  ChatMessage({required this.message, required this.time});
-}
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoom extends StatefulWidget {
-  const ChatRoom({super.key});
+  // 클래스 이름 수정
+  final String user1;
+  final String user2;
+  final String user2Nickname;
+
+  const ChatRoom({
+    required this.user1,
+    required this.user2,
+    required this.user2Nickname,
+    super.key,
+  });
 
   @override
   _ChatRoomState createState() => _ChatRoomState();
 }
 
 class _ChatRoomState extends State<ChatRoom> {
-  bool isMenuOpen = false;
-  final TextEditingController _messageController = TextEditingController();
-  bool _isTyping = false;
-  List<ChatMessage> chatMessages = []; // 채팅 메시지 리스트
-  String userNickname = "User123"; // 예시로 사용자 닉네임 설정
-  String profileImageUrl = ""; // 예시 프로필 이미지 URL
+  // 클래스 이름 수정에 따른 변경
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+  final _scrollController = ScrollController();
+  late WebSocketChannel _channel;
+  final List<Map<String, String>> _messages = [];
+  String _statusMessage = 'Connecting to server...';
+  bool _isConnected = true;
 
-  String _getFormattedTime() {
-    final now = DateTime.now();
-    final year = now.year;
-    final month = now.month;
-    final day = now.day;
-    final hour = now.hour;
-    final minute = now.minute;
-    return '$year년 $month월 $day일 ${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+  @override
+  void initState() {
+    super.initState();
+    _connectWebSocket();
   }
 
-  // 메시지를 보내는 함수
+  void _scrollToBottom() {
+    // 스크롤 이동 함수
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _connectWebSocket() {
+    String websocketIP = dotenv.env['WEBSOCKET_IP']!;
+    _channel = WebSocketChannel.connect(
+      Uri.parse('wss://$websocketIP/ws/${widget.user1}/${widget.user2}'),
+    );
+
+    _channel.stream.listen(
+      (message) {
+        setState(() {
+          final decodedMessage = message.split(': ');
+          _messages.add({
+            "sender": decodedMessage[0],
+            "message": decodedMessage[1],
+          });
+          _scrollToBottom();
+        });
+      },
+      onDone: () {
+        setState(() {
+          _statusMessage = 'Disconnected from the server';
+        });
+      },
+      onError: (error) {
+        setState(() {
+          _statusMessage = 'Error: $error';
+        });
+      },
+    );
+
+    setState(() {
+      _statusMessage = 'Connected to server';
+    });
+  }
+
+  void _disconnectWebSocket() {
+    setState(() {
+      _isConnected = false;
+      _statusMessage = 'Disconnected from the server';
+    });
+    _channel.sink.close();
+  }
+
   void _sendMessage() {
-    if (_messageController.text.isNotEmpty) {
-      setState(() {
-        String currentTime = _getFormattedTime();
-        chatMessages.add(
-            ChatMessage(message: _messageController.text, time: currentTime));
-        _messageController.clear();
-        _isTyping = false;
-      });
+    if (_controller.text.isNotEmpty) {
+      final message = _controller.text;
+      _controller.clear();
+
+      try {
+        _channel.sink.add(message);
+        _focusNode.requestFocus(); // 메시지 전송 후 Focus 다시 설정
+        _scrollToBottom();
+      } catch (e) {
+        print("Error sending message: $e");
+      }
     }
   }
 
-  // 메시지 입력시 타이핑 상태에 따른 아이콘 변경
-  void _onMessageChange(String text) {
-    setState(() {
-      _isTyping = text.isNotEmpty;
-    });
+  // Widget _buildProfileImage({double radius = 20}) {
+  //   return CircleAvatar(
+  //     radius: radius,
+  //     backgroundColor: Colors.grey[300],
+  //     child: ClipOval(
+  //       child: Image.asset(
+  //         'assets/default_profile.jpg',
+  //         width: radius * 2,
+  //         height: radius * 2,
+  //         fit: BoxFit.cover,
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // void _showOpponentProfileDialog(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return Dialog(
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(20.0),
+  //         ),
+  //         child: Container(
+  //           padding: const EdgeInsets.all(20),
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               _buildProfileImage(radius: 50),
+  //               const SizedBox(height: 16),
+  //               Text(
+  //                 widget.user2Nickname,
+  //                 style: const TextStyle(
+  //                   fontSize: 24,
+  //                   fontWeight: FontWeight.bold,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 20),
+  //               ElevatedButton(
+  //                 style: ElevatedButton.styleFrom(
+  //                   backgroundColor: const Color.fromARGB(255, 145, 115, 214),
+  //                   shape: RoundedRectangleBorder(
+  //                     borderRadius: BorderRadius.circular(30),
+  //                   ),
+  //                 ),
+  //                 onPressed: () {
+  //                   Navigator.of(context).pop();
+  //                 },
+  //                 child: const Padding(
+  //                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+  //                   child: Text(
+  //                     '닫기',
+  //                     style: TextStyle(fontSize: 16, color: Colors.white),
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(userNickname), // 대화 상대의 닉네임
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop();
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.user2Nickname), // 중앙에 닉네임 표시
+          centerTitle: true, // 닉네임을 정중앙으로 배치
+          backgroundColor: const Color.fromARGB(255, 145, 115, 214),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              setState(() {
-                isMenuOpen = !isMenuOpen; // 메뉴 버튼 클릭 시 사이드바 열고 닫기
-              });
+              Navigator.of(context).pop();
             },
           ),
-        ],
-        backgroundColor: Colors.deepPurple, // 앱바 배경색을 설정
-        foregroundColor: Colors.white, // 앱바의 텍스트와 아이콘 색상 설정
-      ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              // 채팅 메시지 영역
-              Expanded(
-                child: ListView.builder(
-                  itemCount: chatMessages.length,
-                  itemBuilder: (context, index) {
-                    bool isUserMessage =
-                        index % 2 == 0; // 임의로 사용자 메시지를 짝수 인덱스에 설정
-                    final chatMessage = chatMessages[index];
-                    return Align(
-                      alignment: isUserMessage
-                          ? Alignment.centerRight // 내 메시지는 오른쪽
-                          : Alignment.centerLeft, // 상대방 메시지는 왼쪽
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (!isUserMessage)
-                              CircleAvatar(
-                                backgroundImage: NetworkImage(profileImageUrl),
-                              ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: isUserMessage
-                                      ? Colors.blue
-                                      : Colors.grey.shade300,
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                padding: const EdgeInsets.all(10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      chatMessage.message,
-                                      style: TextStyle(
-                                        color: isUserMessage
-                                            ? Colors.white
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      chatMessage.time,
-                                      style: TextStyle(
-                                        color: isUserMessage
-                                            ? Colors.white
-                                            : Colors.black.withOpacity(0.6),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.power_settings_new),
+              color: _isConnected ? Colors.green : Colors.red,
+              onPressed: _isConnected ? _disconnectWebSocket : null,
+            ),
+            const SizedBox(width: 15),
+          ],
+        ),
+        backgroundColor: const Color.fromARGB(255, 193, 178, 227),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                _statusMessage,
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                itemCount: _messages.length,
+                itemBuilder: (context, index) {
+                  final message = _messages[index];
+                  bool isUser = message['sender'] == widget.user1;
+
+                  return Align(
+                    alignment:
+                        isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!isUser) ...[
+                            CircleAvatar(
+                              backgroundColor: Colors.grey[300],
+                              child: const Icon(Icons.person), // 기본 프로필 이미지
+                            ),
+                            const SizedBox(width: 8), // 프로필 사진과 메시지 간격
+                          ],
+                          Container(
+                            decoration: BoxDecoration(
+                              color: isUser
+                                  ? Colors.blue
+                                  : const Color.fromARGB(255, 255, 255, 255),
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            padding: const EdgeInsets.all(10),
+                            child: Text(
+                              message['message']!,
+                              style: TextStyle(
+                                color: isUser ? Colors.white : Colors.black,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              // 하단 바 영역
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _messageController,
-                        onChanged: _onMessageChange,
-                        onSubmitted: (_) {
-                          _sendMessage(); // 엔터키를 눌러서 메시지 전송
-                        },
-                        decoration: const InputDecoration(
-                          hintText: 'Enter your message...',
-                          border: OutlineInputBorder(),
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.send,
-                        color: _isTyping ? Colors.blue : Colors.grey,
-                      ),
-                      onPressed: _isTyping ? _sendMessage : null,
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      decoration:
+                          const InputDecoration(hintText: 'Enter message'),
+                      onSubmitted: (_) => _sendMessage(),
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          // 어두운 오버레이 배경
-          if (isMenuOpen)
-            GestureDetector(
-              onTap: () {
-                // 사이드바 닫기
-                setState(() {
-                  isMenuOpen = false;
-                });
-              },
-              child: Container(
-                color: Colors.black.withOpacity(0.5), // 반투명한 어두운 배경
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.send),
+                    onPressed: _sendMessage,
+                  ),
+                ],
               ),
             ),
-          // 사이드바 화면을 오른쪽에 표시
-          if (isMenuOpen)
-            Positioned(
-              top: 0,
-              right: 0,
-              bottom: 0,
-              child: _buildSideBar(),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // 사이드바 화면 (Spotify 음악 리스트)
-  Widget _buildSideBar() {
-    return Container(
-      width: 300,
-      color: Colors.blueGrey,
-      child: const Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'Shared Music List',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
