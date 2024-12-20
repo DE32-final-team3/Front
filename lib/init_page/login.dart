@@ -67,7 +67,6 @@ class _LoginState extends State<Login> {
           _passwordController.clear();
         }
       } catch (e) {
-        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("네트워크 에러가 발생했습니다. 다시 시도해주세요."),
