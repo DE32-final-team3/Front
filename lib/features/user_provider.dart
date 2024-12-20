@@ -43,8 +43,8 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void setMovieList(List<dynamic> movieList) {
-    _movieList = List<int>.from(movieList);
+  void setMovieList(List<int> movieList) {
+    _movieList = movieList;
     notifyListeners();
   }
 

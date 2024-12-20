@@ -25,7 +25,6 @@ class _PageListState extends State<Pages> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('🎞️CineTalk')),
       body: _pages[_currentIndex], // 현재 선택된 페이지를 보여줌
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: const Color.fromARGB(255, 7, 19, 254),

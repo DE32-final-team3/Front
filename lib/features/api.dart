@@ -75,18 +75,16 @@ class UserApi {
       userProvider.setUserId(user['id']);
       userProvider.setUserEmail(user['email']);
       userProvider.setUserNickname(user['nickname']);
-      userProvider.setMovieList(user['movie_list']);
+
+      List<int> movieList = List<int>.from(user['movie_list']);
+      userProvider.setMovieList(movieList);
 
       // 사용자 영화 리스트 처리
-      if (user['movie_list'] != null && user['movie_list'].isNotEmpty) {
-        List<dynamic> movies =
-            await MovieApi.fetchMovies(List<int>.from(user['movie_list']));
-        // movies를 List<Map<String, dynamic>>으로 변환
-        List<Map<String, dynamic>> formattedMovies =
-            movies.cast<Map<String, dynamic>>();
+      if (user['movie_list'].isNotEmpty) {
+        List<Map<String, dynamic>> movies =
+            await MovieApi.fetchMovies(movieList);
 
-        // MovieProvider에 영화 데이터 설정
-        movieProvider.setMovieList(formattedMovies);
+        movieProvider.setMovieList(movies);
       } else {
         movieProvider.setMovieList([]); // 빈 리스트 설정
       }
@@ -169,7 +167,7 @@ class UserApi {
     return response.bodyBytes;
   }
 
-  static Future<void> setProfile(
+  static Future<Uint8List> setProfile(
       String id, File imageFile, BuildContext context) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 
@@ -195,7 +193,7 @@ class UserApi {
     // 응답 처리
     if (response.statusCode == 200) {
       Uint8List profileImageBytes = await UserApi.getProfile(id);
-      return;
+      return profileImageBytes;
     } else {
       throw Exception(
         '이미지 업로드 실패: ${response.statusCode}',
@@ -292,7 +290,9 @@ class MovieApi {
         print("response success");
         var data = jsonDecode(utf8.decode(response.bodyBytes));
         // 'movies' 키에 해당하는 데이터를 List<Map<String, dynamic>> 형태로 반환
-        return data['movies']; // 반환되는 데이터 구조에 맞게 수정
+        print(data['movies']);
+        return data['movies']
+            .cast<Map<String, dynamic>>(); // 반환되는 데이터 구조에 맞게 수정
       } else {
         // 응답이 실패한 경우
         throw Exception(
@@ -312,7 +312,7 @@ class MovieApi {
         serverIP, // 호스트 주소
         '/tmdb/search', // 경로
         {
-          'q': query.replaceAll(' ', ''), // 쿼리 매개변수 (공백 제거)
+          'q': query, // 쿼리 매개변수
           'limit': '10', // 한 번에 가져올 영화 수
           'page': '1', // 페이지 번호
         });

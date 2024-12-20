@@ -51,12 +51,11 @@ class _EditProfileState extends State<EditProfile> {
       File imageFile = File(pickedFile.path);
 
       try {
-        // setProfile 함수 호출 (서버에 이미지 업로드)
+        // setProfile 함수 호출 및 프로필 이미지 업데이트
         String userId = context.read<UserProvider>().id;
-        await UserApi.setProfile(userId, imageFile, context);
+        Uint8List imageBytes =
+            await UserApi.setProfile(userId, imageFile, context);
 
-        // 프로필 이미지 업데이트 (File -> Uint8List 변환)
-        Uint8List imageBytes = await imageFile.readAsBytes();
         Provider.of<UserProvider>(context, listen: false)
             .setUserProfile(imageBytes);
       } catch (e) {
