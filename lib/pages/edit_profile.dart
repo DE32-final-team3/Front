@@ -206,7 +206,7 @@ class _EditProfileState extends State<EditProfile> {
                         .clearUser();
                     await Provider.of<MovieProvider>(context, listen: false)
                         .clearMovie();
-                    Auth.clearToken();
+                    await Auth.clearToken();
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => MyApp()),
                       (Route<dynamic> route) => false,
