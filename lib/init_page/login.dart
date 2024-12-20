@@ -50,38 +50,30 @@ class _LoginState extends State<Login> {
       final email = _emailController.text;
       final password = _passwordController.text;
 
-      if (email.isEmpty || password.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('이메일과 비밀번호를 입력해주세요.')),
-        );
-      } else {
-        CustomWidget.showLoadingDialog(context);
+      //CustomWidget.showLoadingDialog(context);
 
-        try {
-          var response = await UserApi.login(email, password);
-          Navigator.pop(context);
-          if (response) {
-            await UserApi.userInfo(context);
-
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => PageList()),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("이메일 또는 비밀번호가 일치하지 않습니다.")),
-            );
-            _passwordController.clear();
-          }
-        } catch (e) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("네트워크 에러가 발생했습니다. 다시 시도해주세요."),
-              duration: Duration(seconds: 3),
-            ),
+      try {
+        var response = await UserApi.login(email, password);
+        if (response) {
+          await UserApi.userInfo(context);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => PageList()),
           );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("이메일 또는 비밀번호가 일치하지 않습니다.")),
+          );
+          _passwordController.clear();
         }
+      } catch (e) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("네트워크 에러가 발생했습니다. 다시 시도해주세요."),
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
     }
   }

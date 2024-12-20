@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
+// pages
+import 'package:cinetalk/main.dart';
 // features
 import 'package:cinetalk/features/user_provider.dart';
+import 'package:cinetalk/features/movie_provider.dart';
+import 'package:cinetalk/features/auth.dart';
 import 'package:cinetalk/features/api.dart';
 
 class EditProfile extends StatefulWidget {
@@ -193,7 +197,26 @@ class _EditProfileState extends State<EditProfile> {
               ),
             ),
             const SizedBox(height: 20), // 이메일과 프로필 사진 사이 여백
-
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    await Provider.of<UserProvider>(context, listen: false)
+                        .clearUser();
+                    await Provider.of<MovieProvider>(context, listen: false)
+                        .clearMovie();
+                    Auth.clearToken();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => MyApp()),
+                      (Route<dynamic> route) => false,
+                    );
+                  },
+                  child: const Text("Logout"),
+                ),
+              ],
+            ),
+            //const SizedBox(height: 10),
             // 프로필 사진과 편집 버튼을 가운데 정렬
             Center(
               child: Column(
