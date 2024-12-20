@@ -1,9 +1,10 @@
+import 'package:cinetalk/features/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'dart:convert';
 
 class ChatRoom extends StatefulWidget {
-  // 클래스 이름 수정
   final String user1;
   final String user2;
   final String user2Nickname;
@@ -20,7 +21,6 @@ class ChatRoom extends StatefulWidget {
 }
 
 class _ChatRoomState extends State<ChatRoom> {
-  // 클래스 이름 수정에 따른 변경
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   final _scrollController = ScrollController();
@@ -36,7 +36,6 @@ class _ChatRoomState extends State<ChatRoom> {
   }
 
   void _scrollToBottom() {
-    // 스크롤 이동 함수
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -97,7 +96,7 @@ class _ChatRoomState extends State<ChatRoom> {
 
       try {
         _channel.sink.add(message);
-        _focusNode.requestFocus(); // 메시지 전송 후 Focus 다시 설정
+        _focusNode.requestFocus();
         _scrollToBottom();
       } catch (e) {
         print("Error sending message: $e");
@@ -105,104 +104,80 @@ class _ChatRoomState extends State<ChatRoom> {
     }
   }
 
-  // Widget _buildProfileImage({double radius = 20}) {
-  //   return CircleAvatar(
-  //     radius: radius,
-  //     backgroundColor: Colors.grey[300],
-  //     child: ClipOval(
-  //       child: Image.asset(
-  //         'assets/default_profile.jpg',
-  //         width: radius * 2,
-  //         height: radius * 2,
-  //         fit: BoxFit.cover,
-  //       ),
-  //     ),
-  //   );
-  // }
+  Future<void> _updateOffset() async {
+    try {
+      // user1과 user2를 정렬하여 topic 생성
+      final users = [widget.user1, widget.user2]..sort();
+      final topic = "${users[0]}-${users[1]}";
 
-  // void _showOpponentProfileDialog(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return Dialog(
-  //         shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.circular(20.0),
-  //         ),
-  //         child: Container(
-  //           padding: const EdgeInsets.all(20),
-  //           child: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               _buildProfileImage(radius: 50),
-  //               const SizedBox(height: 16),
-  //               Text(
-  //                 widget.user2Nickname,
-  //                 style: const TextStyle(
-  //                   fontSize: 24,
-  //                   fontWeight: FontWeight.bold,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 20),
-  //               ElevatedButton(
-  //                 style: ElevatedButton.styleFrom(
-  //                   backgroundColor: const Color.fromARGB(255, 145, 115, 214),
-  //                   shape: RoundedRectangleBorder(
-  //                     borderRadius: BorderRadius.circular(30),
-  //                   ),
-  //                 ),
-  //                 onPressed: () {
-  //                   Navigator.of(context).pop();
-  //                 },
-  //                 child: const Padding(
-  //                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-  //                   child: Text(
-  //                     '닫기',
-  //                     style: TextStyle(fontSize: 16, color: Colors.white),
-  //                   ),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
+      print("Attempting to update offset for topic: $topic and user: ${widget.user1}");
+
+      // postBodyChat 함수 호출
+      final response = await UserApi.postBodyChat(
+        "/api/chat_rooms/update_offset",
+        {"user_id": widget.user1, "topic": topic},
+      );
+
+      // 상태 코드와 응답 본문 처리
+      print("API Response Status Code: ${response.statusCode}");
+      print("API Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['status'] == 'success') {
+          print("Offset updated successfully.");
+        } else {
+          print("Failed to update offset: ${responseData['message']}");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to update: ${responseData['message']}")),
+          );
+        }
+      } else {
+        print("HTTP Error: ${response.statusCode}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("HTTP Error: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
+      print("Error updating offset: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error updating message offset.")),
+      );
+    }
+  }
 
   @override
   void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
-    _scrollController.dispose();
-    super.dispose();
+    // dispose에서 updateOffset 호출
+    _updateOffset().whenComplete(() {
+      _controller.dispose();
+      _focusNode.dispose();
+      _scrollController.dispose();
+      super.dispose();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        Navigator.of(context).pop();
-        return false;
+        // Update offset first, then navigate back
+        await _updateOffset();
+        Navigator.of(context).pop(true);
+        return false; // Prevent default back action
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.user2Nickname), // 중앙에 닉네임 표시
-          centerTitle: true, // 닉네임을 정중앙으로 배치
-          backgroundColor: const Color.fromARGB(255, 145, 115, 214),
+          title: Text(widget.user2Nickname),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.of(context).pop();
+            onPressed: () async {
+              // Update offset before navigating back
+              await _updateOffset();
+              Navigator.of(context).pop(true);
             },
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.power_settings_new),
-              color: _isConnected ? Colors.green : Colors.red,
-              onPressed: _isConnected ? _disconnectWebSocket : null,
-            ),
-            const SizedBox(width: 15),
-          ],
         ),
         backgroundColor: const Color.fromARGB(255, 193, 178, 227),
         body: Column(
@@ -223,8 +198,7 @@ class _ChatRoomState extends State<ChatRoom> {
                   bool isUser = message['sender'] == widget.user1;
 
                   return Align(
-                    alignment:
-                        isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
@@ -233,9 +207,9 @@ class _ChatRoomState extends State<ChatRoom> {
                           if (!isUser) ...[
                             CircleAvatar(
                               backgroundColor: Colors.grey[300],
-                              child: const Icon(Icons.person), // 기본 프로필 이미지
+                              child: const Icon(Icons.person),
                             ),
-                            const SizedBox(width: 8), // 프로필 사진과 메시지 간격
+                            const SizedBox(width: 8),
                           ],
                           Container(
                             decoration: BoxDecoration(

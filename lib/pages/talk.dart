@@ -25,12 +25,11 @@ class _TalkState extends State<Talk> {
 
   Future<void> _fetchChatRooms() async {
     try {
-      // 현재 사용자의 ID 가져오기
       String userId = Provider.of<UserProvider>(context, listen: false).id;
 
-      // FastAPI 호출
+      // unread API 호출
       var response = await UserApi.getParametersChat(
-        '/api/chat_rooms/$userId/recent_messages', // 최근 메시지를 포함한 API 경로
+        '/api/chat_rooms/$userId/unread', // unread API 경로 사용
         '',
         '',
       );
@@ -56,12 +55,12 @@ class _TalkState extends State<Talk> {
           }
 
           updatedChatList.add({
-            "profileImage": profileImageBytes, // 프로필 이미지 바이트 배열
+            "profileImage": profileImageBytes,
             "nickname": partnerNickname,
             "lastMessage": lastMessage,
             "timestamp": room['last_message']['timestamp'],
             "user_id": partnerId,
-            "unreadCount": 0, // 미확인 메시지 기본값
+            "unreadCount": room['unread_count'], // unread count 사용
           });
         }
 
@@ -73,7 +72,6 @@ class _TalkState extends State<Talk> {
           return b['timestamp'].compareTo(a['timestamp']);
         });
 
-        // 상태 업데이트
         setState(() {
           chatList = updatedChatList;
           isLoading = false;
@@ -84,10 +82,11 @@ class _TalkState extends State<Talk> {
     } catch (e) {
       print("Error fetching chat rooms: $e");
       setState(() {
-        isLoading = false; // 로딩 중단
+        isLoading = false;
       });
     }
   }
+
 
   void deleteChat(int index) {
     setState(() {
@@ -127,7 +126,7 @@ class _TalkState extends State<Talk> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()), // 로딩 중
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -152,22 +151,21 @@ class _TalkState extends State<Talk> {
                       showDeleteConfirmationDialog(index);
                     },
                     onTap: () async {
-                      // 채팅방 페이지로 이동
-                      await Navigator.push(
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ChatRoom(
-                            user1: Provider.of<UserProvider>(context,
-                                    listen: false)
-                                .id, // 현재 사용자 ID
-                            user2: chatList[index]['user_id'], // 상대방 사용자 ID
-                            user2Nickname: chatList[index]
-                                ['nickname'], // 상대방 닉네임
+                            user1: Provider.of<UserProvider>(context, listen: false).id,
+                            user2: chatList[index]['user_id'],
+                            user2Nickname: chatList[index]['nickname'],
                           ),
                         ),
                       );
-                      // 돌아오면 목록 새로고침
-                      _fetchChatRooms();
+
+                      // `true`가 반환되면 채팅방 목록 새로고침
+                      if (result == true) {
+                        await _fetchChatRooms();
+                      }
                     },
                     child: ChatBox(
                       profileImage: chatList[index]['profileImage']!,
@@ -184,7 +182,7 @@ class _TalkState extends State<Talk> {
 }
 
 class ChatBox extends StatelessWidget {
-  final Uint8List profileImage; // 수정: Uint8List 타입
+  final Uint8List profileImage;
   final String nickname;
   final String lastMessage;
   final int unreadCount;
@@ -204,13 +202,12 @@ class ChatBox extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundImage: profileImage.isNotEmpty
-              ? MemoryImage(profileImage) // Uint8List 데이터를 이미지로 변환
+              ? MemoryImage(profileImage)
               : const AssetImage('assets/default_profile.png') as ImageProvider,
         ),
         title: Text(
           nickname,
-          style: const TextStyle(
-              fontSize: 16, fontWeight: FontWeight.bold), // Bold 처리
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         subtitle: Text(lastMessage.isEmpty ? '새 메시지가 없습니다.' : lastMessage),
         trailing: unreadCount > 0
