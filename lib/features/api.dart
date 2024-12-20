@@ -263,6 +263,41 @@ class UserApi {
       return null; // 예외 발생 시 null 반환
     }
   }
+
+  static Future<Map<String, dynamic>> getUserInfoFromFollowId(
+      String followId) async {
+    String serverIP = dotenv.env['SERVER_IP']!;
+    var url = Uri.https(
+      serverIP, // 호스트 주소
+      '/user/follow/info', // 경로
+      {
+        'follow_id': followId, // 쿼리 매개변수
+      },
+    );
+
+    try {
+      final response = await http.get(url, headers: {
+        'Accept': 'application/json;charset=UTF-8',
+      });
+
+      if (response.statusCode == 200) {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = jsonDecode(decodedBody);
+        print('유저 정보: $data');
+
+        return {
+          'nickname': data['nickname'],
+          'profile': data['profile'],
+          'movie_list': data['movie_list'],
+        };
+      } else {
+        throw Exception('Failed to load user info');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+    return {};
+  }
 }
 
 class MovieApi {
