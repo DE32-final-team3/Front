@@ -14,63 +14,45 @@ class Talk extends StatefulWidget {
 }
 
 class _TalkState extends State<Talk> {
-  List<Map<String, dynamic>> chatList = []; // 채팅방 목록
-  bool isLoading = true; // 로딩 상태
+  List<Map<String, dynamic>> chatList = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchChatRooms(); // 채팅방 목록 가져오기
+    _fetchChatRooms();
   }
 
   Future<void> _fetchChatRooms() async {
     try {
-      String userId = Provider.of<UserProvider>(context, listen: false).id;
+      final userId = Provider.of<UserProvider>(context, listen: false).id;
 
-      // unread API 호출
-      var response = await UserApi.getParametersChat(
-        '/api/chat_rooms/$userId/unread', // unread API 경로 사용
+      final response = await UserApi.getParametersChat(
+        '/api/chat_rooms/$userId/unread',
         '',
         '',
       );
 
-      if (response != null && response['status'] == 'success') {
-        var fetchedChatRooms = response['data'];
+      if (response?['status'] == 'success') {
+        final fetchedChatRooms = response['data'] as List<dynamic>? ?? [];
+        final updatedChatList = await Future.wait(
+          fetchedChatRooms.map((room) async {
+            final partnerId = room['partner_id'];
+            final profileImageBytes = await _fetchProfileImage(partnerId);
 
-        // chatList 업데이트
-        List<Map<String, dynamic>> updatedChatList = [];
-        for (var room in fetchedChatRooms) {
-          String partnerId = room['partner_id'];
-          String partnerNickname = room['partner_nickname'] ?? "Unknown";
-          String lastMessage =
-              room['last_message']['text'] ?? "No messages yet";
+            return {
+              "profileImage": profileImageBytes,
+              "nickname": room['partner_nickname'] ?? "Unknown",
+              "lastMessage": room['last_message']?['text'] ?? "No messages yet",
+              "timestamp": room['last_message']?['timestamp'],
+              "user_id": partnerId,
+              "unreadCount": room['unread_count'] ?? 0,
+            };
+          }).toList(),
+        );
 
-          // 프로필 이미지 가져오기
-          Uint8List profileImageBytes;
-          try {
-            profileImageBytes = await UserApi.getProfile(partnerId);
-          } catch (e) {
-            print("Error fetching profile image for $partnerId: $e");
-            profileImageBytes = Uint8List(0); // 기본 빈 값
-          }
-
-          updatedChatList.add({
-            "profileImage": profileImageBytes,
-            "nickname": partnerNickname,
-            "lastMessage": lastMessage,
-            "timestamp": room['last_message']['timestamp'],
-            "user_id": partnerId,
-            "unreadCount": room['unread_count'], // unread count 사용
-          });
-        }
-
-        // 타임스탬프 기준 정렬
-        updatedChatList.sort((a, b) {
-          if (a['timestamp'] == null && b['timestamp'] == null) return 0;
-          if (a['timestamp'] == null) return 1;
-          if (b['timestamp'] == null) return -1;
-          return b['timestamp'].compareTo(a['timestamp']);
-        });
+        updatedChatList.sort((a, b) =>
+            (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
 
         setState(() {
           chatList = updatedChatList;
@@ -87,6 +69,14 @@ class _TalkState extends State<Talk> {
     }
   }
 
+  Future<Uint8List> _fetchProfileImage(String partnerId) async {
+    try {
+      return await UserApi.getProfile(partnerId);
+    } catch (e) {
+      print("Error fetching profile image for $partnerId: $e");
+      return Uint8List(0); // 기본 빈 값
+    }
+  }
 
   void deleteChat(int index) {
     setState(() {
@@ -105,9 +95,7 @@ class _TalkState extends State<Talk> {
           actions: <Widget>[
             TextButton(
               child: const Text('No'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
               child: const Text('Yes'),
@@ -141,41 +129,37 @@ class _TalkState extends State<Talk> {
                 style: TextStyle(fontSize: 18),
               ),
             )
-          : Padding(
+          : ListView.builder(
               padding: const EdgeInsets.all(16.0),
-              child: ListView.builder(
-                itemCount: chatList.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onLongPress: () {
-                      showDeleteConfirmationDialog(index);
-                    },
-                    onTap: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatRoom(
-                            user1: Provider.of<UserProvider>(context, listen: false).id,
-                            user2: chatList[index]['user_id'],
-                            user2Nickname: chatList[index]['nickname'],
-                          ),
+              itemCount: chatList.length,
+              itemBuilder: (context, index) {
+                final chat = chatList[index];
+                return GestureDetector(
+                  onLongPress: () => showDeleteConfirmationDialog(index),
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatRoom(
+                          user1: Provider.of<UserProvider>(context, listen: false).id,
+                          user2: chat['user_id'],
+                          user2Nickname: chat['nickname'],
                         ),
-                      );
+                      ),
+                    );
 
-                      // `true`가 반환되면 채팅방 목록 새로고침
-                      if (result == true) {
-                        await _fetchChatRooms();
-                      }
-                    },
-                    child: ChatBox(
-                      profileImage: chatList[index]['profileImage']!,
-                      nickname: chatList[index]['nickname']!,
-                      lastMessage: chatList[index]['lastMessage']!,
-                      unreadCount: chatList[index]['unreadCount'],
-                    ),
-                  );
-                },
-              ),
+                    if (result == true) {
+                      await _fetchChatRooms();
+                    }
+                  },
+                  child: ChatBox(
+                    profileImage: chat['profileImage'],
+                    nickname: chat['nickname'],
+                    lastMessage: chat['lastMessage'],
+                    unreadCount: chat['unreadCount'],
+                  ),
+                );
+              },
             ),
     );
   }
