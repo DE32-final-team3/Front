@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 class ChatRoom extends StatefulWidget {
   final String user1;
@@ -55,14 +56,30 @@ class _ChatRoomState extends State<ChatRoom> {
 
     _channel.stream.listen(
       (message) {
-        setState(() {
-          final decodedMessage = message.split(': ');
-          _messages.add({
-            "sender": decodedMessage[0],
-            "message": decodedMessage[1],
+        try {
+          final decodedMessage = jsonDecode(message);
+
+          // timestamp 변환
+          String? formattedTime;
+          if (decodedMessage['timestamp'] != null) {
+            final DateTime parsedTime = DateTime.parse(decodedMessage['timestamp']);
+            final DateTime kstTime = parsedTime.add(const Duration(hours: 9));
+            formattedTime = DateFormat('MM/dd HH:mm').format(kstTime);
+          }
+
+          setState(() {
+            _messages.add({
+              "sender": decodedMessage['sender'],
+              "message": decodedMessage['message'],
+              "timestamp": formattedTime ?? 'Unknown time',
+            });
           });
+
+          // 메시지 추가 시 스크롤 다운
           _scrollToBottom();
-        });
+        } catch (_) {
+          // WebSocket 메시지 처리 중 발생하는 오류는 무시
+        }
       },
       onDone: () {
         setState(() {
@@ -76,9 +93,8 @@ class _ChatRoomState extends State<ChatRoom> {
       },
     );
 
-    setState(() {
-      _statusMessage = 'Connected to server';
-    });
+    // 채팅방 진입 시 스크롤 다운
+    _scrollToBottom();
   }
 
   void _disconnectWebSocket() {
@@ -97,59 +113,35 @@ class _ChatRoomState extends State<ChatRoom> {
       try {
         _channel.sink.add(message);
         _focusNode.requestFocus();
+
+        // 메시지 전송 후 스크롤 다운
         _scrollToBottom();
-      } catch (e) {
-        print("Error sending message: $e");
+      } catch (_) {
+        // 메시지 전송 중 발생하는 오류는 무시
       }
     }
   }
 
   Future<void> _updateOffset() async {
     try {
-      // user1과 user2를 정렬하여 topic 생성
       final users = [widget.user1, widget.user2]..sort();
       final topic = "${users[0]}-${users[1]}";
 
-      print("Attempting to update offset for topic: $topic and user: ${widget.user1}");
-
-      // postBodyChat 함수 호출
       final response = await UserApi.postBodyChat(
         "/api/chat_rooms/update_offset",
         {"user_id": widget.user1, "topic": topic},
       );
 
-      // 상태 코드와 응답 본문 처리
-      print("API Response Status Code: ${response.statusCode}");
-      print("API Response Body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-
-        if (responseData['status'] == 'success') {
-          print("Offset updated successfully.");
-        } else {
-          print("Failed to update offset: ${responseData['message']}");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Failed to update: ${responseData['message']}")),
-          );
-        }
-      } else {
-        print("HTTP Error: ${response.statusCode}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("HTTP Error: ${response.statusCode}")),
-        );
+      if (response.statusCode != 200 || jsonDecode(response.body)['status'] != 'success') {
+        // Offset 업데이트 실패 메시지는 필요시 처리 가능
       }
-    } catch (e) {
-      print("Error updating offset: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error updating message offset.")),
-      );
+    } catch (_) {
+      // Offset 업데이트 오류는 무시
     }
   }
 
   @override
   void dispose() {
-    // dispose에서 updateOffset 호출
     _updateOffset().whenComplete(() {
       _controller.dispose();
       _focusNode.dispose();
@@ -162,10 +154,9 @@ class _ChatRoomState extends State<ChatRoom> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Update offset first, then navigate back
         await _updateOffset();
         Navigator.of(context).pop(true);
-        return false; // Prevent default back action
+        return false;
       },
       child: Scaffold(
         appBar: AppBar(
@@ -173,7 +164,6 @@ class _ChatRoomState extends State<ChatRoom> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () async {
-              // Update offset before navigating back
               await _updateOffset();
               Navigator.of(context).pop(true);
             },
@@ -211,20 +201,37 @@ class _ChatRoomState extends State<ChatRoom> {
                             ),
                             const SizedBox(width: 8),
                           ],
-                          Container(
-                            decoration: BoxDecoration(
-                              color: isUser
-                                  ? Colors.blue
-                                  : const Color.fromARGB(255, 255, 255, 255),
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            padding: const EdgeInsets.all(10),
-                            child: Text(
-                              message['message']!,
-                              style: TextStyle(
-                                color: isUser ? Colors.white : Colors.black,
+                          Column(
+                            crossAxisAlignment: isUser
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: isUser
+                                      ? Colors.blue
+                                      : const Color.fromARGB(255, 255, 255, 255),
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                padding: const EdgeInsets.all(10),
+                                child: Text(
+                                  message['message']!,
+                                  style: TextStyle(
+                                    color: isUser ? Colors.white : Colors.black,
+                                  ),
+                                ),
                               ),
-                            ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  message['timestamp'] ?? 'Unknown time',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -241,8 +248,7 @@ class _ChatRoomState extends State<ChatRoom> {
                     child: TextField(
                       controller: _controller,
                       focusNode: _focusNode,
-                      decoration:
-                          const InputDecoration(hintText: 'Enter message'),
+                      decoration: const InputDecoration(hintText: 'Enter message'),
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
