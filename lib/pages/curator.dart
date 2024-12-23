@@ -25,7 +25,8 @@ class _CuratorState extends State<Curator> {
       body: Consumer<MovieProvider>(
         builder: (context, movieProvider, child) {
           // MovieProvider에서 영화 리스트 가져오기
-          List<Map<String, dynamic>> movieList = movieProvider.movieList;
+          List<Map<String, dynamic>> movieList =
+              List.from(movieProvider.movieList);
           // movieList가 null일 경우 문구 표시
           if (movieList.isEmpty) {
             return const Center(
