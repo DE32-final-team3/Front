@@ -233,13 +233,14 @@ class UserApi {
       return null; // 예외 발생 시 null 반환
     }
   }
-  
-  static Future<http.Response> postBodyChat(String path, Map<String, dynamic> params) async {
+
+  static Future<http.Response> postBodyChat(
+      String path, Map<String, dynamic> params) async {
     String? chatIP = dotenv.env['CHAT_IP']!;
 
     var url = Uri.https(
       chatIP, // CHAT_IP로 구성
-      path,   // 경로
+      path, // 경로
     );
 
     try {
@@ -257,7 +258,8 @@ class UserApi {
     } catch (e) {
       print('Error in postBodyChat: $e');
       // 실패 시 500 상태 코드와 에러 메시지로 응답 생성
-      return http.Response('{"status": "error", "message": "Internal error"}', 500);
+      return http.Response(
+          '{"status": "error", "message": "Internal error"}', 500);
     }
   }
 

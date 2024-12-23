@@ -54,6 +54,12 @@ class _SearchMovieState extends State<SearchMovie> {
     });
   }
 
+  void _removeMovie(Map<String, dynamic> movie) {
+    setState(() {
+      selectedMovies.remove(movie); // 선택된 카드 제거
+    });
+  }
+
   List<Map<String, dynamic>> formatMovies(
       List<Map<String, dynamic>> selectedMovies) {
     List<Map<String, dynamic>> formattedMovies = []; // 새로운 리스트 생성
@@ -82,7 +88,11 @@ class _SearchMovieState extends State<SearchMovie> {
   @override
   Widget build(BuildContext context) {
     final movieProvider = Provider.of<MovieProvider>(context);
-    selectedMovies = movieProvider.movieList;
+
+    // provider.movieList를 selectedMovies에 복사
+    if (selectedMovies.isEmpty) {
+      selectedMovies = List<Map<String, dynamic>>.from(movieProvider.movieList);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -198,19 +208,18 @@ class _SearchMovieState extends State<SearchMovie> {
                                       shrinkWrap: true, // Dialog의 크기에 맞게 조정
                                       itemCount: selectedMovies.length,
                                       itemBuilder: (context, index) {
-                                        var movieId = selectedMovies[index];
+                                        var movie = selectedMovies[index];
                                         return GestureDetector(
                                           onTap: () {
                                             setState(() {
-                                              selectedMovies
-                                                  .remove(movieId); // 선택 해제 로직
+                                              _removeMovie(movie);
                                             });
                                           },
                                           child: Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 4.0),
-                                            child: CustomWidget.selectCard(
-                                                movieId),
+                                            child:
+                                                CustomWidget.selectCard(movie),
                                           ),
                                         );
                                       },
@@ -278,6 +287,8 @@ class _SearchMovieState extends State<SearchMovie> {
                                 .toList();
                             await UserApi.update(
                                 "/movies", "movie_list", movieIds);
+                            movieProvider.setMovieList(formattedMovies);
+                            Navigator.pop(context);
                           },
                     backgroundColor:
                         selectedMovies.length != 10 ? Colors.grey : Colors.blue,
