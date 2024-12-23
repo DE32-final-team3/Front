@@ -293,6 +293,21 @@ class UserApi {
       return null; // 예외 발생 시 null 반환
     }
   }
+
+  static Future<Map<String, dynamic>> getFollowInfo(String id) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.https(
+      serverIP, // 호스트 주소
+      '/user/follow/info', // 경로
+      {"follow_id": id},
+    );
+
+    var response = await http.get(url);
+    Map<String, dynamic> user = jsonDecode(utf8.decode(response.bodyBytes));
+    print("디버깅: $user");
+    return user;
+  }
 }
 
 class MovieApi {
