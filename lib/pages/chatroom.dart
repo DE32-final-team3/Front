@@ -1,5 +1,6 @@
-import 'package:cinetalk/features/api.dart';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:cinetalk/features/api.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
@@ -29,11 +30,24 @@ class _ChatRoomState extends State<ChatRoom> {
   final List<Map<String, String>> _messages = [];
   String _statusMessage = 'Connecting to server...';
   bool _isConnected = true;
+  Uint8List? _user2ProfileImage;
 
   @override
   void initState() {
     super.initState();
+    _fetchUser2ProfileImage();
     _connectWebSocket();
+  }
+
+  Future<void> _fetchUser2ProfileImage() async {
+    try {
+      final profileImage = await UserApi.getProfile(widget.user2);
+      setState(() {
+        _user2ProfileImage = profileImage;
+      });
+    } catch (e) {
+      print("Error fetching profile image for ${widget.user2}: $e");
+    }
   }
 
   void _scrollToBottom() {
@@ -59,7 +73,6 @@ class _ChatRoomState extends State<ChatRoom> {
         try {
           final decodedMessage = jsonDecode(message);
 
-          // timestamp 변환
           String? formattedTime;
           if (decodedMessage['timestamp'] != null) {
             final DateTime parsedTime = DateTime.parse(decodedMessage['timestamp']);
@@ -75,11 +88,8 @@ class _ChatRoomState extends State<ChatRoom> {
             });
           });
 
-          // 메시지 추가 시 스크롤 다운
           _scrollToBottom();
-        } catch (_) {
-          // WebSocket 메시지 처리 중 발생하는 오류는 무시
-        }
+        } catch (_) {}
       },
       onDone: () {
         setState(() {
@@ -93,7 +103,6 @@ class _ChatRoomState extends State<ChatRoom> {
       },
     );
 
-    // 채팅방 진입 시 스크롤 다운
     _scrollToBottom();
   }
 
@@ -113,12 +122,8 @@ class _ChatRoomState extends State<ChatRoom> {
       try {
         _channel.sink.add(message);
         _focusNode.requestFocus();
-
-        // 메시지 전송 후 스크롤 다운
         _scrollToBottom();
-      } catch (_) {
-        // 메시지 전송 중 발생하는 오류는 무시
-      }
+      } catch (_) {}
     }
   }
 
@@ -132,12 +137,8 @@ class _ChatRoomState extends State<ChatRoom> {
         {"user_id": widget.user1, "topic": topic},
       );
 
-      if (response.statusCode != 200 || jsonDecode(response.body)['status'] != 'success') {
-        // Offset 업데이트 실패 메시지는 필요시 처리 가능
-      }
-    } catch (_) {
-      // Offset 업데이트 오류는 무시
-    }
+      if (response.statusCode != 200 || jsonDecode(response.body)['status'] != 'success') {}
+    } catch (_) {}
   }
 
   @override
@@ -160,7 +161,16 @@ class _ChatRoomState extends State<ChatRoom> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.user2Nickname),
+          title: Row(
+            children: [
+              if (_user2ProfileImage != null)
+                CircleAvatar(
+                  backgroundImage: MemoryImage(_user2ProfileImage!),
+                ),
+              const SizedBox(width: 8),
+              Text(widget.user2Nickname),
+            ],
+          ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () async {
@@ -194,10 +204,9 @@ class _ChatRoomState extends State<ChatRoom> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (!isUser) ...[
+                          if (!isUser && _user2ProfileImage != null) ...[
                             CircleAvatar(
-                              backgroundColor: Colors.grey[300],
-                              child: const Icon(Icons.person),
+                              backgroundImage: MemoryImage(_user2ProfileImage!),
                             ),
                             const SizedBox(width: 8),
                           ],
