@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:cinetalk/features/api.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -206,114 +209,111 @@ class CustomWidget {
     );
   }
 
-  static void showMovieListDialog(
-    BuildContext context,
-    String nickname,
-    List<Map<String, dynamic>> movies,
-  ) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+  // static void showMovieListDialog(
+  //   BuildContext context,
+  //   String nickname,
+  //   List<Map<String, dynamic>> movies,
+  // ) {
+  //   final screenWidth = MediaQuery.of(context).size.width;
+  //   final screenHeight = MediaQuery.of(context).size.height;
 
-    final crossAxisCount = (screenWidth / 150).floor();
+  //   final crossAxisCount = (screenWidth / 150).floor();
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(
-            "$nickname님의 영화 리스트",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          content: movies.isEmpty
-              ? const Text("No movies found.")
-              : SizedBox(
-                  height: screenHeight * 0.6,
-                  width: screenWidth * 0.6,
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 8.0,
-                      mainAxisSpacing: 8.0,
-                      childAspectRatio: 0.7,
-                    ),
-                    itemCount: movies.length,
-                    itemBuilder: (context, index) {
-                      final movie = movies[index];
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: GestureDetector(
-                          onTap: () {
-                            Uri url = Uri.parse(
-                                'https://www.themoviedb.org/movie/${movie['movie_id']}');
-                            launchUrl(url);
-                          },
-                          child: movie['poster_path'] != null
-                              ? Image.network(
-                                  'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-                                  width: 100,
-                                  height: 150,
-                                  fit: BoxFit.cover,
-                                )
-                              : const Icon(
-                                  Icons.movie,
-                                  size: 100,
-                                  color: Colors.grey,
-                                ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // static Future profileDialog(Map<String, dynamic> user, BuildContext context) {
-  //   return showDialog(
+  //   showDialog(
   //     context: context,
   //     builder: (context) {
   //       return AlertDialog(
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             Row(
-  //                 mainAxisAlignment: MainAxisAlignment.end, // 오른쪽 정렬
-  //                 children: [
-  //                   IconButton(
-  //                       icon: const Icon(
-  //                         Icons.favorite, // 하트 아이콘
-  //                         // follower 아닌 경우 Icons.favorite_border로 변경되도록 추가 구현
-  //                         color: Colors.red, // 하트 색상
-  //                         size: 30, // 아이콘 크기 설정
-  //                       ),
-  //                       onPressed: () {}),
-  //                 ]),
-  //             SizedBox(width: 8), // 이모지와 다른 요소 사이에 간격 추가
-  //             const SizedBox(height: 10),
-  //             CircleAvatar(
-  //               radius: 40,
-  //               backgroundImage: user['profile'] != null
-  //                   ? MemoryImage(user['profile'])
-  //                   : null,
-  //             ),
-  //             const SizedBox(height: 10),
-  //             Text(
-  //               user['nickname'],
-  //               style: const TextStyle(fontSize: 16),
-  //             ),
-  //           ],
+  //         title: Text(
+  //           "$nickname님의 영화 리스트",
+  //           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
   //         ),
+  //         content: movies.isEmpty
+  //             ? const Text("No movies found.")
+  //             : SizedBox(
+  //                 height: screenHeight * 0.6,
+  //                 width: screenWidth * 0.6,
+  //                 child: GridView.builder(
+  //                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+  //                     crossAxisCount: crossAxisCount,
+  //                     crossAxisSpacing: 8.0,
+  //                     mainAxisSpacing: 8.0,
+  //                     childAspectRatio: 0.7,
+  //                   ),
+  //                   itemCount: movies.length,
+  //                   itemBuilder: (context, index) {
+  //                     final movie = movies[index];
+  //                     return ClipRRect(
+  //                       borderRadius: BorderRadius.circular(8.0),
+  //                       child: GestureDetector(
+  //                         onTap: () {
+  //                           Uri url = Uri.parse(
+  //                               'https://www.themoviedb.org/movie/${movie['movie_id']}');
+  //                           launchUrl(url);
+  //                         },
+  //                         child: movie['poster_path'] != null
+  //                             ? Image.network(
+  //                                 'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
+  //                                 width: 100,
+  //                                 height: 150,
+  //                                 fit: BoxFit.cover,
+  //                               )
+  //                             : const Icon(
+  //                                 Icons.movie,
+  //                                 size: 100,
+  //                                 color: Colors.grey,
+  //                               ),
+  //                       ),
+  //                     );
+  //                   },
+  //                 ),
+  //               ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.pop(context),
+  //             child: const Text("Close"),
+  //           ),
+  //         ],
   //       );
   //     },
   //   );
   // }
+
+  static Future<void> showUserProfile(String userId, context) async {
+    try {
+      // Fetch user info and movies
+      final response =
+          await UserApi.getFollowInfo(userId);
+
+      if (response == null ||
+          !response.containsKey('movie_list') ||
+          !response.containsKey('nickname')) {
+        throw Exception("Failed to fetch user info.");
+      }
+
+      final movieIds = response['movie_list'] as List<dynamic>;
+      final nickname = response['nickname'] as String;
+
+      // Fetch profile image separately
+      Uint8List? profileImage = await UserApi.getProfile(userId);
+
+      // Fetch movie details if available
+      List<Map<String, dynamic>> movies = [];
+      if (movieIds.isNotEmpty) {
+        movies = await MovieApi.fetchMovies(movieIds.cast<int>()) ?? [];
+      }
+
+      // Display the unified profile dialog
+      profileDialog({
+        "nickname": nickname,
+        "profile": profileImage,
+      }, context, movies);
+    } catch (e) {
+      print("Error fetching profile for user $userId: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to fetch profile for user $userId")),
+      );
+    }
+  }
 
   static Future<void> profileDialog(
     Map<String, dynamic> user,

@@ -62,43 +62,6 @@ class _CinamatesState extends State<Cinemates> {
     }
   }
 
-  Future<void> _showUserProfile(String userId) async {
-    try {
-      // Fetch user info and movies
-      final response =
-          await UserApi.getFollowInfo(userId);
-
-      if (response == null ||
-          !response.containsKey('movie_list') ||
-          !response.containsKey('nickname')) {
-        throw Exception("Failed to fetch user info.");
-      }
-
-      final movieIds = response['movie_list'] as List<dynamic>;
-      final nickname = response['nickname'] as String;
-
-      // Fetch profile image separately
-      Uint8List? profileImage = await UserApi.getProfile(userId);
-
-      // Fetch movie details if available
-      List<Map<String, dynamic>> movies = [];
-      if (movieIds.isNotEmpty) {
-        movies = await MovieApi.fetchMovies(movieIds.cast<int>()) ?? [];
-      }
-
-      // Display the unified profile dialog
-      CustomWidget.profileDialog({
-        "nickname": nickname,
-        "profile": profileImage,
-      }, context, movies);
-    } catch (e) {
-      print("Error fetching profile for user $userId: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to fetch profile for user $userId")),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,7 +75,7 @@ class _CinamatesState extends State<Cinemates> {
               itemBuilder: (context, index) {
                 final user = similarUser[index];
                 return GestureDetector(
-                  onTap: () => _showUserProfile(user['user_id']),
+                  onTap: () => CustomWidget.showUserProfile(user['user_id'], context),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Card(

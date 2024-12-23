@@ -62,43 +62,6 @@ class _MyPageState extends State<MyPage> {
     }
   }
 
-  Future<void> _showUserProfile(String userId) async {
-    try {
-      // Fetch user info and movies
-      final response =
-          await UserApi.getFollowInfo(userId);
-
-      if (response == null ||
-          !response.containsKey('movie_list') ||
-          !response.containsKey('nickname')) {
-        throw Exception("Failed to fetch user info.");
-      }
-
-      final movieIds = response['movie_list'] as List<dynamic>;
-      final nickname = response['nickname'] as String;
-
-      // Fetch profile image separately
-      Uint8List? profileImage = await UserApi.getProfile(userId);
-
-      // Fetch movie details if available
-      List<Map<String, dynamic>> movies = [];
-      if (movieIds.isNotEmpty) {
-        movies = await MovieApi.fetchMovies(movieIds.cast<int>()) ?? [];
-      }
-
-      // Display the unified profile dialog
-      CustomWidget.profileDialog({
-        "nickname": nickname,
-        "profile": profileImage,
-      }, context, movies);
-    } catch (e) {
-      print("Error fetching profile for user $userId: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to fetch profile for user $userId")),
-      );
-    }
-  }
-
   Widget _buildFollowingList() {
     return followingDetails.isEmpty
         ? const Center(child: CircularProgressIndicator())
@@ -124,7 +87,7 @@ class _MyPageState extends State<MyPage> {
                           : null,
                     ),
                     title: Text(user['nickname']),
-                    onTap: () => _showUserProfile(user['id']),
+                    onTap: () => CustomWidget.showUserProfile(user['id'], context),
                   ),
                 ),
               );
