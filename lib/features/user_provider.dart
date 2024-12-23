@@ -38,7 +38,7 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void setFollowerList(List<dynamic> following) {
+  void setFollowingList(List<dynamic> following) {
     _following = List<String>.from(following);
     notifyListeners();
   }
