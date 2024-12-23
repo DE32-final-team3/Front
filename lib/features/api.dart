@@ -75,6 +75,7 @@ class UserApi {
       userProvider.setUserId(user['id']);
       userProvider.setUserEmail(user['email']);
       userProvider.setUserNickname(user['nickname']);
+      userProvider.setFollowingList(user['following']);
 
       List<int> movieList = List<int>.from(user['movie_list']);
       userProvider.setMovieList(movieList);
@@ -291,6 +292,20 @@ class UserApi {
       print('HTTP Request failed on CHAT_IP: $e');
       return null; // 예외 발생 시 null 반환
     }
+  }
+
+  static Future<Map<String, dynamic>> getFollowInfo(String id) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.https(
+      serverIP, // 호스트 주소
+      '/user/follow/info', // 경로
+      {"follow_id": id},
+    );
+
+    var response = await http.get(url);
+    Map<String, dynamic> user = jsonDecode(utf8.decode(response.bodyBytes));
+    return user;
   }
 }
 
