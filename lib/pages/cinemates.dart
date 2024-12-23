@@ -7,7 +7,6 @@ import 'package:cinetalk/pages/chatroom.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/user_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class Cinemates extends StatefulWidget {
   const Cinemates({super.key});
@@ -22,7 +21,7 @@ class _CinamatesState extends State<Cinemates> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadSimilarUser(); // didChangeDependencies()에서 호출
+    _loadSimilarUser(); // Fetch users when dependencies change
   }
 
   Future<void> _loadSimilarUser() async {
@@ -31,7 +30,7 @@ class _CinamatesState extends State<Cinemates> {
       List<dynamic> users =
           await UserApi.getParameters("/similarity/details", "index", userId);
 
-      // 프로필 이미지 추가 로직
+      // Add profile images to the user list
       List<Map<String, dynamic>> updatedUsers = await Future.wait(
         users.map((user) async {
           Uint8List? profileImage = await _fetchProfileImage(user['user_id']);
@@ -59,43 +58,43 @@ class _CinamatesState extends State<Cinemates> {
       return await UserApi.getProfile(userId);
     } catch (e) {
       print("Error fetching profile image for $userId: $e");
-      return null; // 기본 빈 값
+      return null;
     }
   }
 
-  Future<void> _showUserMovies(String userId) async {
+  Future<void> _showUserProfile(String userId) async {
     try {
-      // 유저의 영화 리스트와 닉네임 가져오기
+      // Fetch user info and movies
       final response =
-          await UserApi.getParameters("/user/follow/info", "follow_id", userId);
+          await UserApi.getFollowInfo(userId);
 
-      if (response == null || !response.containsKey('movie_list') || !response.containsKey('nickname')) {
+      if (response == null ||
+          !response.containsKey('movie_list') ||
+          !response.containsKey('nickname')) {
         throw Exception("Failed to fetch user info.");
       }
 
       final movieIds = response['movie_list'] as List<dynamic>;
       final nickname = response['nickname'] as String;
 
-      if (movieIds.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No movies found for this user")),
-        );
-        return;
+      // Fetch profile image separately
+      Uint8List? profileImage = await UserApi.getProfile(userId);
+
+      // Fetch movie details if available
+      List<Map<String, dynamic>> movies = [];
+      if (movieIds.isNotEmpty) {
+        movies = await MovieApi.fetchMovies(movieIds.cast<int>()) ?? [];
       }
 
-      // 영화 상세 정보 가져오기
-      final movies = await MovieApi.fetchMovies(movieIds.cast<int>());
-
-      if (movies == null || movies.isEmpty) {
-        throw Exception("Failed to fetch movie details.");
-      }
-
-      // CustomWidget을 사용해 다이얼로그 표시
-      CustomWidget.showMovieListDialog(context, nickname, movies);
+      // Display the unified profile dialog
+      CustomWidget.profileDialog({
+        "nickname": nickname,
+        "profile": profileImage,
+      }, context, movies);
     } catch (e) {
-      print("Error fetching movies for user $userId: $e");
+      print("Error fetching profile for user $userId: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to fetch movies for user $userId")),
+        SnackBar(content: Text("Failed to fetch profile for user $userId")),
       );
     }
   }
@@ -113,7 +112,7 @@ class _CinamatesState extends State<Cinemates> {
               itemBuilder: (context, index) {
                 final user = similarUser[index];
                 return GestureDetector(
-                  onTap: () => _showUserMovies(user['user_id']),
+                  onTap: () => _showUserProfile(user['user_id']),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Card(
@@ -148,7 +147,9 @@ class _CinamatesState extends State<Cinemates> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => ChatRoom(
-                                      user1: Provider.of<UserProvider>(context, listen: false).id,
+                                      user1: Provider.of<UserProvider>(context,
+                                              listen: false)
+                                          .id,
                                       user2: user['user_id'],
                                       user2Nickname: user['nickname'],
                                     ),

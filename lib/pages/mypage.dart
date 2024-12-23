@@ -35,7 +35,7 @@ class _MyPageState extends State<MyPage> {
       List<Map<String, dynamic>> userDetails = await Future.wait(
         followingIds.map((id) async {
           try {
-            Uint8List profileImage = await UserApi.getProfile(id);
+            Uint8List? profileImage = await UserApi.getProfile(id); // Fetch profile image
             Map<String, dynamic> followInfo = await UserApi.getFollowInfo(id);
 
             return {
@@ -59,6 +59,43 @@ class _MyPageState extends State<MyPage> {
       });
     } catch (e) {
       print("Error fetching following details: $e");
+    }
+  }
+
+  Future<void> _showUserProfile(String userId) async {
+    try {
+      // Fetch user info and movies
+      final response =
+          await UserApi.getFollowInfo(userId);
+
+      if (response == null ||
+          !response.containsKey('movie_list') ||
+          !response.containsKey('nickname')) {
+        throw Exception("Failed to fetch user info.");
+      }
+
+      final movieIds = response['movie_list'] as List<dynamic>;
+      final nickname = response['nickname'] as String;
+
+      // Fetch profile image separately
+      Uint8List? profileImage = await UserApi.getProfile(userId);
+
+      // Fetch movie details if available
+      List<Map<String, dynamic>> movies = [];
+      if (movieIds.isNotEmpty) {
+        movies = await MovieApi.fetchMovies(movieIds.cast<int>()) ?? [];
+      }
+
+      // Display the unified profile dialog
+      CustomWidget.profileDialog({
+        "nickname": nickname,
+        "profile": profileImage,
+      }, context, movies);
+    } catch (e) {
+      print("Error fetching profile for user $userId: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to fetch profile for user $userId")),
+      );
     }
   }
 
@@ -87,9 +124,7 @@ class _MyPageState extends State<MyPage> {
                           : null,
                     ),
                     title: Text(user['nickname']),
-                    onTap: () {
-                      CustomWidget.profileDialog(user, context);
-                    },
+                    onTap: () => _showUserProfile(user['id']),
                   ),
                 ),
               );
@@ -133,7 +168,6 @@ class _MyPageState extends State<MyPage> {
                         ? const Icon(Icons.person, size: 60) // 기본 아이콘
                         : null,
                   ),
-                  //const SizedBox(height: 1),
                   Text(
                     userProvider.nickname, // provider 사용해서 data load
                     style: const TextStyle(
@@ -142,7 +176,6 @@ class _MyPageState extends State<MyPage> {
                     ),
                   ),
                   const SizedBox(height: 5), // 닉네임과 이메일 사이 여백
-                  // 이메일
                   Text(
                     userProvider.email,
                     style: const TextStyle(

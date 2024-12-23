@@ -275,7 +275,56 @@ class CustomWidget {
     );
   }
 
-  static Future profileDialog(Map<String, dynamic> user, BuildContext context) {
+  // static Future profileDialog(Map<String, dynamic> user, BuildContext context) {
+  //   return showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Row(
+  //                 mainAxisAlignment: MainAxisAlignment.end, // 오른쪽 정렬
+  //                 children: [
+  //                   IconButton(
+  //                       icon: const Icon(
+  //                         Icons.favorite, // 하트 아이콘
+  //                         // follower 아닌 경우 Icons.favorite_border로 변경되도록 추가 구현
+  //                         color: Colors.red, // 하트 색상
+  //                         size: 30, // 아이콘 크기 설정
+  //                       ),
+  //                       onPressed: () {}),
+  //                 ]),
+  //             SizedBox(width: 8), // 이모지와 다른 요소 사이에 간격 추가
+  //             const SizedBox(height: 10),
+  //             CircleAvatar(
+  //               radius: 40,
+  //               backgroundImage: user['profile'] != null
+  //                   ? MemoryImage(user['profile'])
+  //                   : null,
+  //             ),
+  //             const SizedBox(height: 10),
+  //             Text(
+  //               user['nickname'],
+  //               style: const TextStyle(fontSize: 16),
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+  static Future<void> profileDialog(
+    Map<String, dynamic> user,
+    BuildContext context,
+    List<Map<String, dynamic>> movies,
+  ) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    final crossAxisCount = (screenWidth / 150).floor();
+
     return showDialog(
       context: context,
       builder: (context) {
@@ -284,19 +333,20 @@ class CustomWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
-                  mainAxisAlignment: MainAxisAlignment.end, // 오른쪽 정렬
-                  children: [
-                    IconButton(
-                        icon: const Icon(
-                          Icons.favorite, // 하트 아이콘
-                          // follower 아닌 경우 Icons.favorite_border로 변경되도록 추가 구현
-                          color: Colors.red, // 하트 색상
-                          size: 30, // 아이콘 크기 설정
-                        ),
-                        onPressed: () {}),
-                  ]),
-              SizedBox(width: 8), // 이모지와 다른 요소 사이에 간격 추가
-              const SizedBox(height: 10),
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.favorite,
+                      color: Colors.red,
+                      size: 30,
+                    ),
+                    onPressed: () {
+                      // Follow/Unfollow 기능 추가 구현
+                    },
+                  ),
+                ],
+              ),
               CircleAvatar(
                 radius: 40,
                 backgroundImage: user['profile'] != null
@@ -306,10 +356,61 @@ class CustomWidget {
               const SizedBox(height: 10),
               Text(
                 user['nickname'],
-                style: const TextStyle(fontSize: 16),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold, // 글자체를 볼드로 설정
+                ),
               ),
+              const SizedBox(height: 20),
+              if (movies.isNotEmpty)
+                SizedBox(
+                  height: screenHeight * 0.4,
+                  width: screenWidth * 0.6,
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
+                      childAspectRatio: 0.7,
+                    ),
+                    itemCount: movies.length,
+                    itemBuilder: (context, index) {
+                      final movie = movies[index];
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            Uri url = Uri.parse(
+                                'https://www.themoviedb.org/movie/${movie['movie_id']}');
+                            launchUrl(url);
+                          },
+                          child: movie['poster_path'] != null
+                              ? Image.network(
+                                  'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
+                                  width: 100,
+                                  height: 150,
+                                  fit: BoxFit.cover,
+                                )
+                              : const Icon(
+                                  Icons.movie,
+                                  size: 100,
+                                  color: Colors.grey,
+                                ),
+                        ),
+                      );
+                    },
+                  ),
+                )
+              else
+                const Text("No movies found."),
             ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close"),
+            ),
+          ],
         );
       },
     );
