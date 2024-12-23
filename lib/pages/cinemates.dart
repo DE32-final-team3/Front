@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 // pages
@@ -14,7 +15,7 @@ class Cinemates extends StatefulWidget {
 }
 
 class _CinamatesState extends State<Cinemates> {
-  List<dynamic>? similarUser;
+  List<Map<String, dynamic>> similarUser = [];
 
   @override
   void didChangeDependencies() {
@@ -28,11 +29,32 @@ class _CinamatesState extends State<Cinemates> {
       List<dynamic> users =
           await UserApi.getParameters("/similarity/details", "index", userId);
 
+      // 프로필 이미지 추가 로직
+      List<Map<String, dynamic>> updatedUsers = await Future.wait(
+        users.map((user) async {
+          Uint8List? profileImage = await _fetchProfileImage(user['user_id']);
+          return {
+            "user_id": user['user_id'],
+            "nickname": user['nickname'],
+            "profileImage": profileImage,
+          };
+        }).toList(),
+      );
+
       setState(() {
-        similarUser = users;
+        similarUser = updatedUsers;
       });
     } catch (e) {
       print("Error: $e");
+    }
+  }
+
+  Future<Uint8List?> _fetchProfileImage(String userId) async {
+    try {
+      return await UserApi.getProfile(userId);
+    } catch (e) {
+      print("Error fetching profile image for $userId: $e");
+      return null; // 기본 빈 값
     }
   }
 
@@ -40,78 +62,73 @@ class _CinamatesState extends State<Cinemates> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Cinemates')),
-      body: similarUser == null
+      body: similarUser.isEmpty
           ? const Center(
               child: CircularProgressIndicator(), // 로딩 중 상태
             )
-          : similarUser!.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No similar users found',
-                    style: TextStyle(fontSize: 20),
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: similarUser!.length,
-                  itemBuilder: (context, index) {
-                    final user = similarUser![index];
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0), // 카드 간격
-                      child: Card(
-                        elevation: 4, // 그림자 효과
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12), // 둥근 모서리
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0), // 카드 내부 여백
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                backgroundColor: Colors.grey[300],
-                                child: const Icon(Icons.person), // 기본 프로필 이미지
-                              ),
-                              const SizedBox(width: 10), // 프로필 사진과 텍스트 간격
-                              Expanded(
-                                child: Text(
-                                  user['nickname'],
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ChatRoom(
-                                        user1: Provider.of<UserProvider>(
-                                                context,
-                                                listen: false)
-                                            .id, // 현재 사용자 id
-                                        user2: user['user_id'], // 클릭된 사용자 id
-                                        user2Nickname: user['nickname'],
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: const Text('채팅하기'),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20, vertical: 10),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              ),
-                            ],
+          : ListView.builder(
+              itemCount: similarUser.length,
+              itemBuilder: (context, index) {
+                final user = similarUser[index];
+                return Padding(
+                  padding: const EdgeInsets.all(8.0), // 카드 간격
+                  child: Card(
+                    elevation: 4, // 그림자 효과
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12), // 둥근 모서리
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0), // 카드 내부 여백
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundImage: user['profileImage'] != null
+                                ? MemoryImage(user['profileImage']!)
+                                : const AssetImage('assets/default_profile.png')
+                                    as ImageProvider,
+                            backgroundColor: Colors.grey[300],
                           ),
-                        ),
+                          const SizedBox(width: 10), // 프로필 사진과 텍스트 간격
+                          Expanded(
+                            child: Text(
+                              user['nickname'],
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatRoom(
+                                    user1: Provider.of<UserProvider>(context,
+                                            listen: false)
+                                        .id, // 현재 사용자 id
+                                    user2: user['user_id'], // 클릭된 사용자 id
+                                    user2Nickname: user['nickname'],
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Text('채팅하기'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }
