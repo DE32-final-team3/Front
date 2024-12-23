@@ -166,7 +166,6 @@ class CustomWidget {
   }
 
   static Widget selectCard(var movie) {
-    print(movie.runtimeType);
     return Card(
       elevation: 4.0,
       shape: RoundedRectangleBorder(

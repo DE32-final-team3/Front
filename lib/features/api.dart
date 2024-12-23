@@ -137,11 +137,11 @@ class UserApi {
   }
 
   // update user information
-  static Future<int> update(String param, String value) async {
+  static Future<int> update(String path, String param, dynamic value) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
     String? token = await Auth.getToken();
 
-    var url = Uri.https(serverIP, '/user/update');
+    var url = Uri.https(serverIP, '/user/update$path');
     var response = await http.put(
       url,
       headers: {
@@ -325,8 +325,6 @@ class MovieApi {
       if (response.statusCode == 200) {
         final decodedBody = utf8.decode(response.bodyBytes);
         final Map<String, dynamic> data = jsonDecode(decodedBody);
-        print(data['result']);
-
         return data['results']; // 검색된 영화 리스트 업데이트
       } else {
         throw Exception('Failed to load movies');
@@ -355,7 +353,6 @@ class MovieApi {
         body: jsonEncode(movie),
         encoding: Encoding.getByName('utf-8'),
       );
-      print(movie);
 
       if (response.statusCode == 200) {
         print('영화 저장 성공');

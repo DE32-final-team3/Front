@@ -70,7 +70,7 @@ class _EditProfileState extends State<EditProfile> {
       _formKey.currentState!.save();
 
       // 서버에 비동기 요청
-      var res = await UserApi.update("password", _passwordController.text);
+      var res = await UserApi.update("", "password", _passwordController.text);
       if (res == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -104,7 +104,7 @@ class _EditProfileState extends State<EditProfile> {
     var statusCode = await UserApi.postParameters(
         "/user/check/nickname", "nickname", nickname);
     if (statusCode == 200) {
-      var res = await UserApi.update("nickname", nickname);
+      var res = await UserApi.update("", "nickname", nickname);
 
       if (res == 200) {
         ScaffoldMessenger.of(context).showSnackBar(

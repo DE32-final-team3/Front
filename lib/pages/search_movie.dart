@@ -54,6 +54,31 @@ class _SearchMovieState extends State<SearchMovie> {
     });
   }
 
+  List<Map<String, dynamic>> formatMovies(
+      List<Map<String, dynamic>> selectedMovies) {
+    List<Map<String, dynamic>> formattedMovies = []; // 새로운 리스트 생성
+
+    for (var movie in selectedMovies) {
+      Map<String, dynamic> formatMovie = {}; // 매번 새로운 Map 생성
+
+      formatMovie['cast'] = movie['cast'] ?? [];
+      formatMovie['genres'] = movie['genre_ids'] ?? movie['genres'];
+      formatMovie['director'] = movie['director'] ?? [];
+      formatMovie['movie_id'] = movie['id'] ?? movie['movie_id'];
+      formatMovie['original_language'] = movie['original_language'] ?? '';
+      formatMovie['original_title'] = movie['original_title'] ?? '';
+      formatMovie['overview'] = movie['overview'] ?? '';
+      formatMovie['poster_path'] = movie['poster_path'] ?? '';
+      formatMovie['release_date'] = movie['release_date'] ?? '';
+      formatMovie['title'] = movie['title'];
+
+      // 포맷된 영화 추가
+      formattedMovies.add(formatMovie);
+    }
+
+    return formattedMovies; // 포맷된 영화 리스트 반환
+  }
+
   @override
   Widget build(BuildContext context) {
     final movieProvider = Provider.of<MovieProvider>(context);
@@ -245,11 +270,18 @@ class _SearchMovieState extends State<SearchMovie> {
                             );
                           }
                         : () async {
-                            await MovieApi.saveMovies(selectedMovies);
+                            List<Map<String, dynamic>> formattedMovies =
+                                formatMovies(selectedMovies);
+                            await MovieApi.saveMovies(formattedMovies);
+                            List<int> movieIds = formattedMovies
+                                .map((movie) => movie['movie_id'] as int)
+                                .toList();
+                            await UserApi.update(
+                                "/movies", "movie_list", movieIds);
                           },
-                    child: Icon(Icons.save),
                     backgroundColor:
                         selectedMovies.length != 10 ? Colors.grey : Colors.blue,
+                    child: Icon(Icons.save),
                   );
                 },
               )),
