@@ -89,7 +89,6 @@ class _MyPageState extends State<MyPage> {
                       context: context,
                       builder: (context) {
                         return AlertDialog(
-                          title: Text('User Details: ${user['nickname']}'),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -131,7 +130,7 @@ class _MyPageState extends State<MyPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('My Page')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0), // 전체 여백 설정
+        padding: const EdgeInsets.symmetric(horizontal: 16.0), // 전체 여백 설정
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -152,19 +151,19 @@ class _MyPageState extends State<MyPage> {
               child: Column(
                 children: [
                   CircleAvatar(
-                    radius: 80,
+                    radius: 60,
                     backgroundImage: userProvider.profile != null
                         ? MemoryImage(userProvider.profile as Uint8List)
                         : null,
                     child: userProvider.profile == null
-                        ? const Icon(Icons.person, size: 80) // 기본 아이콘
+                        ? const Icon(Icons.person, size: 60) // 기본 아이콘
                         : null,
                   ),
-                  const SizedBox(height: 20),
+                  //const SizedBox(height: 1),
                   Text(
                     userProvider.nickname, // provider 사용해서 data load
                     style: const TextStyle(
-                      fontSize: 35, // 폰트 크기
+                      fontSize: 30, // 폰트 크기
                       fontWeight: FontWeight.bold, // 볼드체
                     ),
                   ),
@@ -173,7 +172,7 @@ class _MyPageState extends State<MyPage> {
                   Text(
                     userProvider.email,
                     style: const TextStyle(
-                      fontSize: 18, // 폰트 크기
+                      fontSize: 15, // 폰트 크기
                       color: Colors.grey, // 이메일 텍스트 색상
                     ),
                   ),

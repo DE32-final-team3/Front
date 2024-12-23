@@ -305,7 +305,6 @@ class UserApi {
 
     var response = await http.get(url);
     Map<String, dynamic> user = jsonDecode(utf8.decode(response.bodyBytes));
-    print("디버깅: $user");
     return user;
   }
 }

@@ -5,7 +5,6 @@ import 'package:cinetalk/init_page/find_pw.dart';
 import 'package:cinetalk/init_page/sign_up.dart';
 // features
 import 'package:cinetalk/features/api.dart';
-import 'package:cinetalk/features/custom_widget.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
