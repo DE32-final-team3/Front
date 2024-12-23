@@ -255,7 +255,6 @@ class CustomWidget {
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    var userProvider = Provider.of<UserProvider>(context, listen: false);
     final crossAxisCount = (screenWidth / 150).floor();
 
     return showDialog(
@@ -268,30 +267,38 @@ class CustomWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      userProvider.following.contains(user['id'])
-                          ? Icons.favorite
-                          : Icons.favorite_outline,
-                      color: Colors.red,
-                      size: 30,
-                    ),
-                    onPressed: () async {
-                      userProvider.following.contains(user['id'])
-                          ? {
-                              await UserApi.unfollow("/user/follow/delete", {
-                                "id": userProvider.id,
-                                "following_id": user['id']
-                              }),
-                              userProvider.unfollow(user['id'])
-                            }
-                          : {
-                              await UserApi.postParameters("/user/follow", {
-                                "id": userProvider.id,
-                                "following_id": user['id']
-                              }),
-                              userProvider.follow(user['id'])
-                            };
+                  Consumer<UserProvider>(
+                    builder: (context, provider, child) {
+                      final isFollowing =
+                          provider.following.contains(user['id']);
+                      return IconButton(
+                        icon: Icon(
+                          isFollowing ? Icons.favorite : Icons.favorite_outline,
+                          color: Colors.red,
+                          size: 30,
+                        ),
+                        onPressed: () async {
+                          if (isFollowing) {
+                            await UserApi.unfollow(
+                              "/user/follow/delete",
+                              {
+                                "id": provider.id,
+                                "following_id": user['id'],
+                              },
+                            );
+                            provider.unfollow(user['id']);
+                          } else {
+                            await UserApi.postParameters(
+                              "/user/follow",
+                              {
+                                "id": provider.id,
+                                "following_id": user['id'],
+                              },
+                            );
+                            provider.follow(user['id']);
+                          }
+                        },
+                      );
                     },
                   ),
                 ],
@@ -307,7 +314,7 @@ class CustomWidget {
                 user['nickname'],
                 style: const TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.bold, // 글자체를 볼드로 설정
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 20),
