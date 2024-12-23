@@ -1,9 +1,12 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:cinetalk/features/api.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'dart:convert';
+import 'package:intl/intl.dart';
 
 class ChatRoom extends StatefulWidget {
-  // 클래스 이름 수정
   final String user1;
   final String user2;
   final String user2Nickname;
@@ -20,7 +23,6 @@ class ChatRoom extends StatefulWidget {
 }
 
 class _ChatRoomState extends State<ChatRoom> {
-  // 클래스 이름 수정에 따른 변경
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   final _scrollController = ScrollController();
@@ -28,15 +30,27 @@ class _ChatRoomState extends State<ChatRoom> {
   final List<Map<String, String>> _messages = [];
   String _statusMessage = 'Connecting to server...';
   bool _isConnected = true;
+  Uint8List? _user2ProfileImage;
 
   @override
   void initState() {
     super.initState();
+    _fetchUser2ProfileImage();
     _connectWebSocket();
   }
 
+  Future<void> _fetchUser2ProfileImage() async {
+    try {
+      final profileImage = await UserApi.getProfile(widget.user2);
+      setState(() {
+        _user2ProfileImage = profileImage;
+      });
+    } catch (e) {
+      print("Error fetching profile image for ${widget.user2}: $e");
+    }
+  }
+
   void _scrollToBottom() {
-    // 스크롤 이동 함수
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -56,14 +70,27 @@ class _ChatRoomState extends State<ChatRoom> {
 
     _channel.stream.listen(
       (message) {
-        setState(() {
-          final decodedMessage = message.split(': ');
-          _messages.add({
-            "sender": decodedMessage[0],
-            "message": decodedMessage[1],
+        try {
+          final decodedMessage = jsonDecode(message);
+
+          String? formattedTime;
+          if (decodedMessage['timestamp'] != null) {
+            final DateTime parsedTime =
+                DateTime.parse(decodedMessage['timestamp']);
+            final DateTime kstTime = parsedTime.add(const Duration(hours: 9));
+            formattedTime = DateFormat('MM/dd HH:mm').format(kstTime);
+          }
+
+          setState(() {
+            _messages.add({
+              "sender": decodedMessage['sender'],
+              "message": decodedMessage['message'],
+              "timestamp": formattedTime ?? 'Unknown time',
+            });
           });
+
           _scrollToBottom();
-        });
+        } catch (_) {}
       },
       onDone: () {
         setState(() {
@@ -77,9 +104,7 @@ class _ChatRoomState extends State<ChatRoom> {
       },
     );
 
-    setState(() {
-      _statusMessage = 'Connected to server';
-    });
+    _scrollToBottom();
   }
 
   void _disconnectWebSocket() {
@@ -97,102 +122,72 @@ class _ChatRoomState extends State<ChatRoom> {
 
       try {
         _channel.sink.add(message);
-        _focusNode.requestFocus(); // 메시지 전송 후 Focus 다시 설정
+        _focusNode.requestFocus();
         _scrollToBottom();
-      } catch (e) {
-        print("Error sending message: $e");
-      }
+      } catch (_) {}
     }
   }
 
-  // Widget _buildProfileImage({double radius = 20}) {
-  //   return CircleAvatar(
-  //     radius: radius,
-  //     backgroundColor: Colors.grey[300],
-  //     child: ClipOval(
-  //       child: Image.asset(
-  //         'assets/default_profile.jpg',
-  //         width: radius * 2,
-  //         height: radius * 2,
-  //         fit: BoxFit.cover,
-  //       ),
-  //     ),
-  //   );
-  // }
+  Future<void> _updateOffset() async {
+    try {
+      final users = [widget.user1, widget.user2]..sort();
+      final topic = "${users[0]}-${users[1]}";
 
-  // void _showOpponentProfileDialog(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return Dialog(
-  //         shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.circular(20.0),
-  //         ),
-  //         child: Container(
-  //           padding: const EdgeInsets.all(20),
-  //           child: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               _buildProfileImage(radius: 50),
-  //               const SizedBox(height: 16),
-  //               Text(
-  //                 widget.user2Nickname,
-  //                 style: const TextStyle(
-  //                   fontSize: 24,
-  //                   fontWeight: FontWeight.bold,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 20),
-  //               ElevatedButton(
-  //                 style: ElevatedButton.styleFrom(
-  //                   backgroundColor: const Color.fromARGB(255, 145, 115, 214),
-  //                   shape: RoundedRectangleBorder(
-  //                     borderRadius: BorderRadius.circular(30),
-  //                   ),
-  //                 ),
-  //                 onPressed: () {
-  //                   Navigator.of(context).pop();
-  //                 },
-  //                 child: const Padding(
-  //                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-  //                   child: Text(
-  //                     '닫기',
-  //                     style: TextStyle(fontSize: 16, color: Colors.white),
-  //                   ),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
+      final response = await UserApi.postBodyChat(
+        "/api/chat_rooms/update_offset",
+        {"user_id": widget.user1, "topic": topic},
+      );
+
+      if (response.statusCode != 200 ||
+          jsonDecode(response.body)['status'] != 'success') {}
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
-    _scrollController.dispose();
-    super.dispose();
+    _updateOffset().whenComplete(() {
+      _controller.dispose();
+      _focusNode.dispose();
+      _scrollController.dispose();
+      super.dispose();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        Navigator.of(context).pop();
+        await _updateOffset();
+        Navigator.of(context).pop(true);
         return false;
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.user2Nickname), // 중앙에 닉네임 표시
-          centerTitle: true, // 닉네임을 정중앙으로 배치
-          backgroundColor: const Color.fromARGB(255, 145, 115, 214),
+          title: Row(
+            children: [
+              CircleAvatar(
+                backgroundImage: _user2ProfileImage != null
+                    ? MemoryImage(_user2ProfileImage!)
+                    : null,
+                child: _user2ProfileImage == null
+                    ? const Icon(Icons.person)
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                widget.user2Nickname,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+            ],
+          ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.of(context).pop();
+            onPressed: () async {
+              await _updateOffset();
+              Navigator.of(context).pop(true);
             },
           ),
           actions: [
@@ -230,27 +225,44 @@ class _ChatRoomState extends State<ChatRoom> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (!isUser) ...[
+                          if (!isUser && _user2ProfileImage != null) ...[
                             CircleAvatar(
-                              backgroundColor: Colors.grey[300],
-                              child: const Icon(Icons.person), // 기본 프로필 이미지
+                              backgroundImage: MemoryImage(_user2ProfileImage!),
                             ),
-                            const SizedBox(width: 8), // 프로필 사진과 메시지 간격
+                            const SizedBox(width: 8),
                           ],
-                          Container(
-                            decoration: BoxDecoration(
-                              color: isUser
-                                  ? Colors.blue
-                                  : const Color.fromARGB(255, 255, 255, 255),
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            padding: const EdgeInsets.all(10),
-                            child: Text(
-                              message['message']!,
-                              style: TextStyle(
-                                color: isUser ? Colors.white : Colors.black,
+                          Column(
+                            crossAxisAlignment: isUser
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: isUser
+                                      ? Colors.blue
+                                      : const Color.fromARGB(
+                                          255, 255, 255, 255),
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                padding: const EdgeInsets.all(10),
+                                child: Text(
+                                  message['message']!,
+                                  style: TextStyle(
+                                    color: isUser ? Colors.white : Colors.black,
+                                  ),
+                                ),
                               ),
-                            ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  message['timestamp'] ?? 'Unknown',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
