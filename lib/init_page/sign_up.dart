@@ -53,7 +53,7 @@ class _SignUpState extends State<SignUp> {
 
     // API 호출 코드
     var statusCode =
-        await UserApi.postParameters("/user/check/email", "email", email);
+        await UserApi.postParameters("/user/check/email", {"email": email});
     if (statusCode == 200) {
       setState(() {
         _isEmailChecked = true;
@@ -90,7 +90,7 @@ class _SignUpState extends State<SignUp> {
 
     // API 호출 코드
     var statusCode = await UserApi.postParameters(
-        "user/check/nickname", "nickname", nickname);
+        "user/check/nickname", {"nickname": nickname});
     if (statusCode == 200) {
       setState(() {
         _isNicknameChecked = true;

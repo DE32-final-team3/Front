@@ -38,8 +38,8 @@ class _FindPasswordState extends State<FindPassword> {
 
     try {
       String email = _emailController.text;
-      var statusCode =
-          await UserApi.postParameters("/user/password/reset", "email", email);
+      var statusCode = await UserApi.postParameters(
+          "/user/password/reset", {"email": email});
 
       // 로딩 다이얼로그 닫기
       Navigator.pop(context);

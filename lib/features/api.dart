@@ -104,13 +104,13 @@ class UserApi {
   }
 
   static Future<int> postParameters(
-      String path, String param, String value) async {
+      String path, Map<String, String> params) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 
     var url = Uri.https(
       serverIP, // 호스트 주소
       path, // 경로
-      {param: value},
+      params,
     );
 
     var response = await http.post(url);

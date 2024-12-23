@@ -102,7 +102,7 @@ class _EditProfileState extends State<EditProfile> {
 
     // nickname 변경
     var statusCode = await UserApi.postParameters(
-        "/user/check/nickname", "nickname", nickname);
+        "/user/check/nickname", {"nickname": nickname});
     if (statusCode == 200) {
       var res = await UserApi.update("", "nickname", nickname);
 
