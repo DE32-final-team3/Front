@@ -54,6 +54,12 @@ class _SearchMovieState extends State<SearchMovie> {
     });
   }
 
+  void _removeMovie(Map<String, dynamic> movie) {
+    setState(() {
+      selectedMovies.remove(movie); // 선택된 카드 제거
+    });
+  }
+
   List<Map<String, dynamic>> formatMovies(
       List<Map<String, dynamic>> selectedMovies) {
     List<Map<String, dynamic>> formattedMovies = []; // 새로운 리스트 생성
@@ -82,7 +88,11 @@ class _SearchMovieState extends State<SearchMovie> {
   @override
   Widget build(BuildContext context) {
     final movieProvider = Provider.of<MovieProvider>(context);
-    selectedMovies = movieProvider.movieList;
+
+    // provider.movieList를 selectedMovies에 복사
+    if (selectedMovies.isEmpty) {
+      selectedMovies = List<Map<String, dynamic>>.from(movieProvider.movieList);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -178,113 +188,117 @@ class _SearchMovieState extends State<SearchMovie> {
           Positioned(
             bottom: 16.0,
             left: 16.0,
-            child: Consumer<MovieProvider>(
-              builder: (context, movieProvider, child) {
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    FloatingActionButton(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('선택한 영화 목록'),
-                              content: SizedBox(
-                                width: double.maxFinite, // Dialog의 내용이 꽉 차도록 설정
-                                child: StatefulBuilder(
-                                  builder: (context, setState) {
-                                    return ListView.builder(
-                                      shrinkWrap: true, // Dialog의 크기에 맞게 조정
-                                      itemCount: selectedMovies.length,
-                                      itemBuilder: (context, index) {
-                                        var movieId = selectedMovies[index];
-                                        return GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              selectedMovies
-                                                  .remove(movieId); // 선택 해제 로직
-                                            });
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 4.0),
-                                            child: CustomWidget.selectCard(
-                                                movieId),
-                                          ),
-                                        );
-                                      },
-                                    );
+            child: FloatingActionButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('선택한 영화 목록'),
+                      content: SizedBox(
+                        width: double.maxFinite, // Dialog의 내용이 꽉 차도록 설정
+                        child: StatefulBuilder(
+                          builder: (context, setState) {
+                            return ListView.builder(
+                              shrinkWrap: true, // Dialog의 크기에 맞게 조정
+                              itemCount: selectedMovies.length,
+                              itemBuilder: (context, index) {
+                                var movie = selectedMovies[index];
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _removeMovie(movie);
+                                    });
                                   },
-                                ),
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: const Text('Close'),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ],
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 4.0),
+                                    child: CustomWidget.selectCard(movie),
+                                  ),
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                      child: Icon(Icons.list),
-                    ),
-                    if (selectedMovies.isNotEmpty) // 리스트가 비어있지 않을 경우에만 표시
-                      Positioned(
-                        right: -6.0,
-                        top: -6.0,
-                        child: CircleAvatar(
-                          radius: 12, // 크기 조정
-                          backgroundColor: Colors.red,
-                          child: Text(
-                            selectedMovies.length.toString(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
                         ),
                       ),
-                  ],
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text('Close'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 );
               },
+              child: Icon(Icons.list),
             ),
           ),
+          // CircleAvatar (조건부 표시)
+
+          if (selectedMovies.isNotEmpty)
+            Positioned(
+              bottom: 55.0,
+              left: 55.0,
+              child: CircleAvatar(
+                radius: 12, // 크기 조정
+                backgroundColor: Colors.red,
+                child: Text(
+                  selectedMovies.length.toString(),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          // Padding(
+          //   padding: const EdgeInsets.only(top: 8.0),
+          //   child: CircleAvatar(
+          //     radius: 12, // 크기 조정
+          //     backgroundColor: Colors.red,
+          //     child: Text(
+          //       selectedMovies.length.toString(),
+          //       style: const TextStyle(
+          //         fontSize: 12,
+          //         fontWeight: FontWeight.bold,
+          //         color: Colors.white,
+          //       ),
+          //     ),
+          //   ),
+          // ),
           Positioned(
-              bottom: 16.0,
-              right: 16.0,
-              child: Consumer<UserProvider>(
-                builder: (context, userProvider, child) {
-                  return FloatingActionButton(
-                    onPressed: selectedMovies.length != 10
-                        ? () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('10개의 영화를 선택해주세요.'),
-                                duration: Duration(seconds: 1),
-                              ),
-                            );
-                          }
-                        : () async {
-                            List<Map<String, dynamic>> formattedMovies =
-                                formatMovies(selectedMovies);
-                            await MovieApi.saveMovies(formattedMovies);
-                            List<int> movieIds = formattedMovies
-                                .map((movie) => movie['movie_id'] as int)
-                                .toList();
-                            await UserApi.update(
-                                "/movies", "movie_list", movieIds);
-                          },
-                    backgroundColor:
-                        selectedMovies.length != 10 ? Colors.grey : Colors.blue,
-                    child: Icon(Icons.save),
-                  );
-                },
-              )),
+            bottom: 16.0,
+            right: 16.0,
+            child: FloatingActionButton(
+              onPressed: selectedMovies.length != 10
+                  ? () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('10개의 영화를 선택해주세요.'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    }
+                  : () async {
+                      List<Map<String, dynamic>> formattedMovies =
+                          formatMovies(selectedMovies);
+                      await MovieApi.saveMovies(formattedMovies);
+                      List<int> movieIds = formattedMovies
+                          .map((movie) => movie['movie_id'] as int)
+                          .toList();
+                      await UserApi.update("/movies", "movie_list", movieIds);
+                      movieProvider.setMovieList(formattedMovies);
+                      Navigator.pop(context);
+                    },
+              backgroundColor:
+                  selectedMovies.length != 10 ? Colors.grey : Colors.blue,
+              child: Icon(Icons.save),
+            ),
+          )
         ],
       ),
     );
