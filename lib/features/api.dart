@@ -290,7 +290,7 @@ class MovieApi {
         print("response success");
         var data = jsonDecode(utf8.decode(response.bodyBytes));
         // 'movies' 키에 해당하는 데이터를 List<Map<String, dynamic>> 형태로 반환
-        print(data['movies']);
+        //print(data['movies']);
         return data['movies']
             .cast<Map<String, dynamic>>(); // 반환되는 데이터 구조에 맞게 수정
       } else {
@@ -335,5 +335,33 @@ class MovieApi {
       print('Error: $e');
     }
     return [];
+  }
+
+  static Future<void> saveMovies(List<Map<String, dynamic>> movies) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.https(
+      serverIP,
+      '/movie/save',
+    );
+
+    for (var movie in movies) {
+      var response = await http.post(
+        url,
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(movie),
+        encoding: Encoding.getByName('utf-8'),
+      );
+      print(movie);
+
+      if (response.statusCode == 200) {
+        print('영화 저장 성공');
+      } else {
+        print('영화 저장 실패');
+      }
+    }
   }
 }

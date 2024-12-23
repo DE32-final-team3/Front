@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/custom_widget.dart';
+import 'package:cinetalk/features/user_provider.dart';
 import 'package:cinetalk/features/movie_provider.dart';
 
 class SearchMovie extends StatefulWidget {
@@ -14,8 +15,9 @@ class SearchMovie extends StatefulWidget {
 
 class _SearchMovieState extends State<SearchMovie> {
   final TextEditingController _searchController = TextEditingController();
+
   List<Map<String, dynamic>> searchdMovies = [];
-  List<int> selectedMovies = [];
+  List<Map<String, dynamic>> selectedMovies = [];
 
   // 검색 버튼 클릭 시 동작할 함수
   void _search() async {
@@ -24,16 +26,39 @@ class _SearchMovieState extends State<SearchMovie> {
       // TMDb API를 호출하여 영화 검색
       List<Map<String, dynamic>> movies =
           List<Map<String, dynamic>>.from(await MovieApi.searchMovies(query));
-
       setState(() {
         searchdMovies = movies; // 검색된 영화 리스트 상태 업데이트
       });
+
+      // 검색된 영화가 없을 경우 Snackbar 띄우기
+      if (searchdMovies.isEmpty) {
+        _searchController.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('일치하는 영화가 없습니다. 다시 검색해주세요.'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
     }
-    _searchController.clear();
+  }
+
+  // 선택한 영화를 selectedMovies 리스트에 추가 또는 제거
+  void _toggleSelectedMovie(Map<String, dynamic> movie) {
+    setState(() {
+      if (selectedMovies.contains(movie)) {
+        selectedMovies.remove(movie); // 선택된 카드라면 제거
+      } else {
+        selectedMovies.add(movie); // 선택되지 않은 카드라면 추가
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final movieProvider = Provider.of<MovieProvider>(context);
+    selectedMovies = movieProvider.movieList;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('큐레이터 생성'),
@@ -103,10 +128,21 @@ class _SearchMovieState extends State<SearchMovie> {
                           itemCount: searchdMovies.length,
                           itemBuilder: (context, index) {
                             var movie = searchdMovies[index];
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: CustomWidget.searchCard(movie),
+                            bool isSelected = selectedMovies.contains(movie);
+                            return GestureDetector(
+                              onTap: () {
+                                _toggleSelectedMovie(movie);
+                              },
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Container(
+                                  color: isSelected
+                                      ? Colors.blueAccent.withOpacity(0.2)
+                                      : Colors.white,
+                                  child: CustomWidget.searchCard(movie),
+                                ),
+                              ),
                             );
                           },
                         ),
@@ -128,18 +164,38 @@ class _SearchMovieState extends State<SearchMovie> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: Text('선택한 영화 목록'),
-                              content: SingleChildScrollView(
-                                child: ListBody(
-                                  children:
-                                      movieProvider.movieList.map((movie) {
-                                    return CustomWidget.miniCard(movie);
-                                  }).toList(),
+                              title: const Text('선택한 영화 목록'),
+                              content: SizedBox(
+                                width: double.maxFinite, // Dialog의 내용이 꽉 차도록 설정
+                                child: StatefulBuilder(
+                                  builder: (context, setState) {
+                                    return ListView.builder(
+                                      shrinkWrap: true, // Dialog의 크기에 맞게 조정
+                                      itemCount: selectedMovies.length,
+                                      itemBuilder: (context, index) {
+                                        var movieId = selectedMovies[index];
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              selectedMovies
+                                                  .remove(movieId); // 선택 해제 로직
+                                            });
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 4.0),
+                                            child: CustomWidget.selectCard(
+                                                movieId),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
                                 ),
                               ),
                               actions: <Widget>[
                                 TextButton(
-                                  child: Text('Close'),
+                                  child: const Text('Close'),
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                   },
@@ -151,22 +207,23 @@ class _SearchMovieState extends State<SearchMovie> {
                       },
                       child: Icon(Icons.list),
                     ),
-                    Positioned(
-                      top: 5,
-                      right: 5,
-                      child: CircleAvatar(
-                        radius: 12,
-                        backgroundColor: Colors.red,
-                        child: Text(
-                          movieProvider.movieList.length.toString(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                    if (selectedMovies.isNotEmpty) // 리스트가 비어있지 않을 경우에만 표시
+                      Positioned(
+                        right: -6.0,
+                        top: -6.0,
+                        child: CircleAvatar(
+                          radius: 12, // 크기 조정
+                          backgroundColor: Colors.red,
+                          child: Text(
+                            selectedMovies.length.toString(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 );
               },
@@ -175,18 +232,24 @@ class _SearchMovieState extends State<SearchMovie> {
           Positioned(
               bottom: 16.0,
               right: 16.0,
-              child: Consumer<MovieProvider>(
-                builder: (context, movieProvider, child) {
+              child: Consumer<UserProvider>(
+                builder: (context, userProvider, child) {
                   return FloatingActionButton(
-                    onPressed: movieProvider.movieList.length != 10
-                        ? null
-                        : () {
-                            // Your save logic here
+                    onPressed: selectedMovies.length != 10
+                        ? () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('10개의 영화를 선택해주세요.'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          }
+                        : () async {
+                            await MovieApi.saveMovies(selectedMovies);
                           },
                     child: Icon(Icons.save),
-                    backgroundColor: movieProvider.movieList.length != 10
-                        ? Colors.grey
-                        : Colors.blue,
+                    backgroundColor:
+                        selectedMovies.length != 10 ? Colors.grey : Colors.blue,
                   );
                 },
               )),

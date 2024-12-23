@@ -76,42 +76,6 @@ class CustomWidget {
     );
   }
 
-  static Widget miniCard(var movie) {
-    return Card(
-      elevation: 4.0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          children: [
-            // Movie poster
-            movie['poster_path'] != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.network(
-                      'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-                      width: 50,
-                      height: 75,
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                : const Icon(Icons.movie, size: 70, color: Colors.grey),
-            const SizedBox(width: 8.0),
-            Text(
-              movie['title'],
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   static Widget searchCard(var movie) {
     return Card(
       elevation: 4.0,
@@ -160,11 +124,6 @@ class CustomWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.add, color: Colors.blue),
-                        padding: EdgeInsets.zero,
-                      ),
                     ],
                   ),
                   const SizedBox(height: 8.0),
@@ -199,6 +158,48 @@ class CustomWidget {
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget selectCard(var movie) {
+    print(movie.runtimeType);
+    return Card(
+      elevation: 4.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: //Text(movie.toString()),
+            Row(
+          children: [
+            // Movie poster
+            movie['poster_path'] != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.network(
+                      'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
+                      width: 50,
+                      height: 75,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : const Icon(Icons.movie, size: 70, color: Colors.grey),
+            const SizedBox(width: 16.0),
+            Column(
+              children: [
+                Text(
+                  movie['title'],
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
