@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:cinetalk/features/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // pages
@@ -67,56 +68,29 @@ class _MyPageState extends State<MyPage> {
         : ListView.builder(
             itemCount: followingDetails.length,
             itemBuilder: (context, index) {
-              final user = followingDetails[index];
+              var user = followingDetails[index];
 
               return Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: user['profile'] != null
-                        ? MemoryImage(user['profile'])
-                        : null,
-                    child: user['profile'] == null
-                        ? const Icon(Icons.person)
-                        : null,
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0), // Card 내부 공백 설정
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: user['profile'] != null
+                          ? MemoryImage(user['profile'])
+                          : null,
+                      child: user['profile'] == null
+                          ? const Icon(Icons.person)
+                          : null,
+                    ),
+                    title: Text(user['nickname']),
+                    onTap: () {
+                      CustomWidget.profileDialog(user, context);
+                    },
                   ),
-                  title: Text(user['nickname']),
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircleAvatar(
-                                radius: 40,
-                                backgroundImage: user['profile'] != null
-                                    ? MemoryImage(user['profile'])
-                                    : null,
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                user['nickname'],
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text('Close'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
                 ),
               );
             },

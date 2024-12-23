@@ -274,4 +274,44 @@ class CustomWidget {
       },
     );
   }
+
+  static Future profileDialog(Map<String, dynamic> user, BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                  mainAxisAlignment: MainAxisAlignment.end, // 오른쪽 정렬
+                  children: [
+                    IconButton(
+                        icon: const Icon(
+                          Icons.favorite, // 하트 아이콘
+                          // follower 아닌 경우 Icons.favorite_border로 변경되도록 추가 구현
+                          color: Colors.red, // 하트 색상
+                          size: 30, // 아이콘 크기 설정
+                        ),
+                        onPressed: () {}),
+                  ]),
+              SizedBox(width: 8), // 이모지와 다른 요소 사이에 간격 추가
+              const SizedBox(height: 10),
+              CircleAvatar(
+                radius: 40,
+                backgroundImage: user['profile'] != null
+                    ? MemoryImage(user['profile'])
+                    : null,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                user['nickname'],
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
