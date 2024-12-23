@@ -74,6 +74,19 @@ class _CinamatesState extends State<Cinemates> {
               itemCount: similarUser.length,
               itemBuilder: (context, index) {
                 final user = similarUser[index];
+
+                // 조건부로 배경색 설정
+                Color? backgroundColor;
+                if (index == 0) {
+                  backgroundColor = const Color.fromARGB(255, 197, 179, 88); // 금색
+                } else if (index == 1) {
+                  backgroundColor = const Color.fromARGB(255, 192, 192, 192);
+                } else if (index == 2) {
+                  backgroundColor = const Color.fromARGB(255, 205, 127, 50); // 동색
+                } else {
+                  backgroundColor = Colors.grey[300]; // 기본 흰색
+                }
+
                 return GestureDetector(
                   onTap: () => CustomWidget.showUserProfile(user['user_id'], context),
                   child: Padding(
@@ -83,6 +96,7 @@ class _CinamatesState extends State<Cinemates> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      color: backgroundColor, // Card의 배경색 설정
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
@@ -92,7 +106,7 @@ class _CinamatesState extends State<Cinemates> {
                                   ? MemoryImage(user['profileImage']!)
                                   : const AssetImage('assets/default_profile.png')
                                       as ImageProvider,
-                              backgroundColor: Colors.grey[300],
+                              backgroundColor: Colors.transparent, // 배경색 제거
                             ),
                             const SizedBox(width: 10),
                             Expanded(

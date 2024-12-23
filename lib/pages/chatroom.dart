@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:cinetalk/features/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:cinetalk/features/api.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -163,26 +164,15 @@ class _ChatRoomState extends State<ChatRoom> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Row(
-            children: [
-              CircleAvatar(
-                backgroundImage: _user2ProfileImage != null
-                    ? MemoryImage(_user2ProfileImage!)
-                    : null,
-                child: _user2ProfileImage == null
-                    ? const Icon(Icons.person)
-                    : null,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                widget.user2Nickname,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-            ],
+          title: Text(
+            widget.user2Nickname,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
+          centerTitle: true, // AppBar 제목을 가운데 정렬
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () async {
@@ -218,30 +208,30 @@ class _ChatRoomState extends State<ChatRoom> {
                   bool isUser = message['sender'] == widget.user1;
 
                   return Align(
-                    alignment:
-                        isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (!isUser && _user2ProfileImage != null) ...[
-                            CircleAvatar(
-                              backgroundImage: MemoryImage(_user2ProfileImage!),
+                            GestureDetector(
+                              onTap: () => CustomWidget.showUserProfile(widget.user2, context),
+                              child: CircleAvatar(
+                                backgroundImage: MemoryImage(_user2ProfileImage!),
+                              ),
                             ),
                             const SizedBox(width: 8),
                           ],
                           Column(
-                            crossAxisAlignment: isUser
-                                ? CrossAxisAlignment.end
-                                : CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                                isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                             children: [
                               Container(
                                 decoration: BoxDecoration(
                                   color: isUser
                                       ? Colors.blue
-                                      : const Color.fromARGB(
-                                          255, 255, 255, 255),
+                                      : const Color.fromARGB(255, 255, 255, 255),
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
                                 padding: const EdgeInsets.all(10),
