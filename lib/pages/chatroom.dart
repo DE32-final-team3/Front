@@ -168,7 +168,13 @@ class _ChatRoomState extends State<ChatRoom> {
                   backgroundImage: MemoryImage(_user2ProfileImage!),
                 ),
               const SizedBox(width: 8),
-              Text(widget.user2Nickname),
+              Text(
+                widget.user2Nickname,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold, // 굵게 설정
+                  fontSize: 20, // 적절한 폰트 크기 설정 (선택 사항)
+                ),
+              )
             ],
           ),
           leading: IconButton(
@@ -233,7 +239,7 @@ class _ChatRoomState extends State<ChatRoom> {
                               Padding(
                                 padding: const EdgeInsets.only(top: 4.0),
                                 child: Text(
-                                  message['timestamp'] ?? 'Unknown time',
+                                  message['timestamp'] ?? 'Unknown',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.black,
