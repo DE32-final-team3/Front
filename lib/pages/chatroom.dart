@@ -75,7 +75,8 @@ class _ChatRoomState extends State<ChatRoom> {
 
           String? formattedTime;
           if (decodedMessage['timestamp'] != null) {
-            final DateTime parsedTime = DateTime.parse(decodedMessage['timestamp']);
+            final DateTime parsedTime =
+                DateTime.parse(decodedMessage['timestamp']);
             final DateTime kstTime = parsedTime.add(const Duration(hours: 9));
             formattedTime = DateFormat('MM/dd HH:mm').format(kstTime);
           }
@@ -137,7 +138,8 @@ class _ChatRoomState extends State<ChatRoom> {
         {"user_id": widget.user1, "topic": topic},
       );
 
-      if (response.statusCode != 200 || jsonDecode(response.body)['status'] != 'success') {}
+      if (response.statusCode != 200 ||
+          jsonDecode(response.body)['status'] != 'success') {}
     } catch (_) {}
   }
 
@@ -163,18 +165,22 @@ class _ChatRoomState extends State<ChatRoom> {
         appBar: AppBar(
           title: Row(
             children: [
-              if (_user2ProfileImage != null)
-                CircleAvatar(
-                  backgroundImage: MemoryImage(_user2ProfileImage!),
-                ),
+              CircleAvatar(
+                backgroundImage: _user2ProfileImage != null
+                    ? MemoryImage(_user2ProfileImage!)
+                    : null,
+                child: _user2ProfileImage == null
+                    ? const Icon(Icons.person)
+                    : null,
+              ),
               const SizedBox(width: 8),
               Text(
                 widget.user2Nickname,
                 style: const TextStyle(
-                  fontWeight: FontWeight.bold, // 굵게 설정
-                  fontSize: 20, // 적절한 폰트 크기 설정 (선택 사항)
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
                 ),
-              )
+              ),
             ],
           ),
           leading: IconButton(
@@ -184,6 +190,14 @@ class _ChatRoomState extends State<ChatRoom> {
               Navigator.of(context).pop(true);
             },
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.power_settings_new),
+              color: _isConnected ? Colors.green : Colors.red,
+              onPressed: _isConnected ? _disconnectWebSocket : null,
+            ),
+            const SizedBox(width: 15),
+          ],
         ),
         backgroundColor: const Color.fromARGB(255, 193, 178, 227),
         body: Column(
@@ -204,7 +218,8 @@ class _ChatRoomState extends State<ChatRoom> {
                   bool isUser = message['sender'] == widget.user1;
 
                   return Align(
-                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment:
+                        isUser ? Alignment.centerRight : Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
@@ -225,7 +240,8 @@ class _ChatRoomState extends State<ChatRoom> {
                                 decoration: BoxDecoration(
                                   color: isUser
                                       ? Colors.blue
-                                      : const Color.fromARGB(255, 255, 255, 255),
+                                      : const Color.fromARGB(
+                                          255, 255, 255, 255),
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
                                 padding: const EdgeInsets.all(10),
@@ -263,7 +279,8 @@ class _ChatRoomState extends State<ChatRoom> {
                     child: TextField(
                       controller: _controller,
                       focusNode: _focusNode,
-                      decoration: const InputDecoration(hintText: 'Enter message'),
+                      decoration:
+                          const InputDecoration(hintText: 'Enter message'),
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
