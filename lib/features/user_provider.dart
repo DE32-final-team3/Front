@@ -6,7 +6,7 @@ class UserProvider with ChangeNotifier {
   String _email = "";
   String _nickname = "";
   Uint8List? _profile;
-  List<String> _followerList = [];
+  List<String> _following = [];
   List<int> _movieList = [];
 
   // Getter
@@ -14,7 +14,7 @@ class UserProvider with ChangeNotifier {
   String get email => _email;
   String get nickname => _nickname;
   Uint8List? get profile => _profile;
-  List<String> get followerList => _followerList;
+  List<String> get following => _following;
   List<int> get movieList => _movieList;
 
   // Setter
@@ -38,8 +38,8 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void setFollowerList(List<dynamic> followerList) {
-    _followerList = List<String>.from(followerList);
+  void setFollowerList(List<dynamic> following) {
+    _following = List<String>.from(following);
     notifyListeners();
   }
 
@@ -53,7 +53,7 @@ class UserProvider with ChangeNotifier {
     _email = "";
     _nickname = "";
     _profile = null;
-    _followerList = [];
+    _following = [];
     _movieList = [];
     notifyListeners();
   }
