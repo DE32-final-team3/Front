@@ -307,6 +307,19 @@ class UserApi {
     Map<String, dynamic> user = jsonDecode(utf8.decode(response.bodyBytes));
     return user;
   }
+
+  static Future<int> unfollow(String path, Map<String, String> params) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.https(
+      serverIP, // 호스트 주소
+      path, // 경로
+      params,
+    );
+
+    var response = await http.delete(url);
+    return response.statusCode;
+  }
 }
 
 class MovieApi {

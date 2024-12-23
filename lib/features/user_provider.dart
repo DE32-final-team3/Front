@@ -43,6 +43,16 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void follow(String id) {
+    _following.add(id);
+    notifyListeners();
+  }
+
+  void unfollow(String id) {
+    _following.remove(id);
+    notifyListeners();
+  }
+
   void setMovieList(List<int> movieList) {
     _movieList = movieList;
     notifyListeners();

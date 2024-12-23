@@ -1,8 +1,10 @@
 import 'dart:typed_data';
-
-import 'package:cinetalk/features/api.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+// features
+import 'package:cinetalk/features/api.dart';
+import 'package:cinetalk/features/user_provider.dart';
 
 class CustomWidget {
   static void showLoadingDialog(BuildContext context) {
@@ -209,80 +211,10 @@ class CustomWidget {
     );
   }
 
-  // static void showMovieListDialog(
-  //   BuildContext context,
-  //   String nickname,
-  //   List<Map<String, dynamic>> movies,
-  // ) {
-  //   final screenWidth = MediaQuery.of(context).size.width;
-  //   final screenHeight = MediaQuery.of(context).size.height;
-
-  //   final crossAxisCount = (screenWidth / 150).floor();
-
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         title: Text(
-  //           "$nickname님의 영화 리스트",
-  //           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-  //         ),
-  //         content: movies.isEmpty
-  //             ? const Text("No movies found.")
-  //             : SizedBox(
-  //                 height: screenHeight * 0.6,
-  //                 width: screenWidth * 0.6,
-  //                 child: GridView.builder(
-  //                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-  //                     crossAxisCount: crossAxisCount,
-  //                     crossAxisSpacing: 8.0,
-  //                     mainAxisSpacing: 8.0,
-  //                     childAspectRatio: 0.7,
-  //                   ),
-  //                   itemCount: movies.length,
-  //                   itemBuilder: (context, index) {
-  //                     final movie = movies[index];
-  //                     return ClipRRect(
-  //                       borderRadius: BorderRadius.circular(8.0),
-  //                       child: GestureDetector(
-  //                         onTap: () {
-  //                           Uri url = Uri.parse(
-  //                               'https://www.themoviedb.org/movie/${movie['movie_id']}');
-  //                           launchUrl(url);
-  //                         },
-  //                         child: movie['poster_path'] != null
-  //                             ? Image.network(
-  //                                 'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-  //                                 width: 100,
-  //                                 height: 150,
-  //                                 fit: BoxFit.cover,
-  //                               )
-  //                             : const Icon(
-  //                                 Icons.movie,
-  //                                 size: 100,
-  //                                 color: Colors.grey,
-  //                               ),
-  //                       ),
-  //                     );
-  //                   },
-  //                 ),
-  //               ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context),
-  //             child: const Text("Close"),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
   static Future<void> showUserProfile(String userId, context) async {
     try {
       // Fetch user info and movies
-      final response =
-          await UserApi.getFollowInfo(userId);
+      final response = await UserApi.getFollowInfo(userId);
 
       if (response == null ||
           !response.containsKey('movie_list') ||
@@ -304,6 +236,7 @@ class CustomWidget {
 
       // Display the unified profile dialog
       profileDialog({
+        "id": userId,
         "nickname": nickname,
         "profile": profileImage,
       }, context, movies);
@@ -322,7 +255,7 @@ class CustomWidget {
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-
+    var userProvider = Provider.of<UserProvider>(context, listen: false);
     final crossAxisCount = (screenWidth / 150).floor();
 
     return showDialog(
@@ -336,13 +269,29 @@ class CustomWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.favorite,
+                    icon: Icon(
+                      userProvider.following.contains(user['id'])
+                          ? Icons.favorite
+                          : Icons.favorite_outline,
                       color: Colors.red,
                       size: 30,
                     ),
-                    onPressed: () {
-                      // Follow/Unfollow 기능 추가 구현
+                    onPressed: () async {
+                      userProvider.following.contains(user['id'])
+                          ? {
+                              await UserApi.unfollow("/user/follow/delete", {
+                                "id": userProvider.id,
+                                "following_id": user['id']
+                              }),
+                              userProvider.unfollow(user['id'])
+                            }
+                          : {
+                              await UserApi.postParameters("/user/follow", {
+                                "id": userProvider.id,
+                                "following_id": user['id']
+                              }),
+                              userProvider.follow(user['id'])
+                            };
                     },
                   ),
                 ],
