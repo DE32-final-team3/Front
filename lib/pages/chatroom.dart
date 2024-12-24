@@ -150,8 +150,8 @@ class _ChatRoomState extends State<ChatRoom> {
       _controller.dispose();
       _focusNode.dispose();
       _scrollController.dispose();
-      super.dispose();
     });
+    super.dispose();
   }
 
   @override
@@ -208,7 +208,8 @@ class _ChatRoomState extends State<ChatRoom> {
                   bool isUser = message['sender'] == widget.user1;
 
                   return Align(
-                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment:
+                        isUser ? Alignment.centerRight : Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
@@ -216,22 +217,26 @@ class _ChatRoomState extends State<ChatRoom> {
                         children: [
                           if (!isUser && _user2ProfileImage != null) ...[
                             GestureDetector(
-                              onTap: () => CustomWidget.showUserProfile(widget.user2, context),
+                              onTap: () => CustomWidget.showUserProfile(
+                                  widget.user2, context),
                               child: CircleAvatar(
-                                backgroundImage: MemoryImage(_user2ProfileImage!),
+                                backgroundImage:
+                                    MemoryImage(_user2ProfileImage!),
                               ),
                             ),
                             const SizedBox(width: 8),
                           ],
                           Column(
-                            crossAxisAlignment:
-                                isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                            crossAxisAlignment: isUser
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
                             children: [
                               Container(
                                 decoration: BoxDecoration(
                                   color: isUser
                                       ? Colors.blue
-                                      : const Color.fromARGB(255, 255, 255, 255),
+                                      : const Color.fromARGB(
+                                          255, 255, 255, 255),
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
                                 padding: const EdgeInsets.all(10),

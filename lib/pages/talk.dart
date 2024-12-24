@@ -51,8 +51,8 @@ class _TalkState extends State<Talk> {
           }).toList(),
         );
 
-        updatedChatList.sort((a, b) =>
-            (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
+        updatedChatList.sort(
+            (a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
 
         setState(() {
           chatList = updatedChatList;
@@ -141,7 +141,9 @@ class _TalkState extends State<Talk> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => ChatRoom(
-                          user1: Provider.of<UserProvider>(context, listen: false).id,
+                          user1:
+                              Provider.of<UserProvider>(context, listen: false)
+                                  .id,
                           user2: chat['user_id'],
                           user2Nickname: chat['nickname'],
                         ),
