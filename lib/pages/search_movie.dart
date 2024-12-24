@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/custom_widget.dart';
-import 'package:cinetalk/features/user_provider.dart';
 import 'package:cinetalk/features/movie_provider.dart';
 
 class SearchMovie extends StatefulWidget {
@@ -18,6 +17,14 @@ class _SearchMovieState extends State<SearchMovie> {
 
   List<Map<String, dynamic>> searchdMovies = [];
   List<Map<String, dynamic>> selectedMovies = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // page load 시 selectedMovies를 provider에서 초기화
+    final movieProvider = Provider.of<MovieProvider>(context, listen: false);
+    selectedMovies = List<Map<String, dynamic>>.from(movieProvider.movieList);
+  }
 
   // 검색 버튼 클릭 시 동작할 함수
   void _search() async {
@@ -88,11 +95,6 @@ class _SearchMovieState extends State<SearchMovie> {
   @override
   Widget build(BuildContext context) {
     final movieProvider = Provider.of<MovieProvider>(context);
-
-    // provider.movieList를 selectedMovies에 복사
-    if (selectedMovies.isEmpty) {
-      selectedMovies = List<Map<String, dynamic>>.from(movieProvider.movieList);
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -255,21 +257,6 @@ class _SearchMovieState extends State<SearchMovie> {
                 ),
               ),
             ),
-          // Padding(
-          //   padding: const EdgeInsets.only(top: 8.0),
-          //   child: CircleAvatar(
-          //     radius: 12, // 크기 조정
-          //     backgroundColor: Colors.red,
-          //     child: Text(
-          //       selectedMovies.length.toString(),
-          //       style: const TextStyle(
-          //         fontSize: 12,
-          //         fontWeight: FontWeight.bold,
-          //         color: Colors.white,
-          //       ),
-          //     ),
-          //   ),
-          // ),
           Positioned(
             bottom: 16.0,
             right: 16.0,

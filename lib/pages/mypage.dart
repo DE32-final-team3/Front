@@ -18,24 +18,15 @@ class MyPage extends StatefulWidget {
 class _MyPageState extends State<MyPage> {
   List<Map<String, dynamic>> followingDetails = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchFollowingDetails();
-  }
-
-  Future<void> _fetchFollowingDetails() async {
+  Future<List<Map<String, dynamic>>> fetchUserDetails(
+      List<String> followingIds) async {
     try {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-
-      // Following ID 리스트
-      List<String> followingIds = userProvider.following;
-
       // API 호출하여 프로필 및 정보 가져오기
       List<Map<String, dynamic>> userDetails = await Future.wait(
         followingIds.map((id) async {
           try {
-            Uint8List? profileImage = await UserApi.getProfile(id); // Fetch profile image
+            Uint8List? profileImage =
+                await UserApi.getProfile(id); // Fetch profile image
             Map<String, dynamic> followInfo = await UserApi.getFollowInfo(id);
 
             return {
@@ -53,46 +44,11 @@ class _MyPageState extends State<MyPage> {
           }
         }).toList(),
       );
-
-      setState(() {
-        followingDetails = userDetails;
-      });
+      return userDetails;
     } catch (e) {
       print("Error fetching following details: $e");
+      return [];
     }
-  }
-
-  Widget _buildFollowingList() {
-    return followingDetails.isEmpty
-        ? const Center(child: CircularProgressIndicator())
-        : ListView.builder(
-            itemCount: followingDetails.length,
-            itemBuilder: (context, index) {
-              var user = followingDetails[index];
-
-              return Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0), // Card 내부 공백 설정
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: user['profile'] != null
-                          ? MemoryImage(user['profile'])
-                          : null,
-                      child: user['profile'] == null
-                          ? const Icon(Icons.person)
-                          : null,
-                    ),
-                    title: Text(user['nickname']),
-                    onTap: () => CustomWidget.showUserProfile(user['id'], context),
-                  ),
-                ),
-              );
-            },
-          );
   }
 
   @override
@@ -158,7 +114,68 @@ class _MyPageState extends State<MyPage> {
               ),
             ),
             const SizedBox(height: 10),
-            Expanded(child: _buildFollowingList()),
+            Selector<UserProvider, List<String>>(
+                selector: (context, provider) => provider.following,
+                builder: (context, followingList, child) {
+                  return Expanded(
+                    child: FutureBuilder<List<Map<String, dynamic>>>(
+                      future: fetchUserDetails(
+                          Provider.of<UserProvider>(context).following),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return const Center(
+                              child: Text("Error loading following details"));
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              "팔로우한 유저가 없습니다.",
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                          );
+                        } else {
+                          List<Map<String, dynamic>> followingDetails =
+                              snapshot.data!;
+                          return ListView.builder(
+                            itemCount: followingDetails.length,
+                            itemBuilder: (context, index) {
+                              var user = followingDetails[index];
+
+                              return Card(
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(
+                                      4.0), // Card 내부 공백 설정
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundImage: user['profile'] != null
+                                          ? MemoryImage(user['profile'])
+                                          : null,
+                                      child: user['profile'] == null
+                                          ? const Icon(Icons.person)
+                                          : null,
+                                    ),
+                                    title: Text(user['nickname']),
+                                    onTap: () => CustomWidget.showUserProfile(
+                                        user['id'], context),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  );
+                }),
           ],
         ),
       ),
