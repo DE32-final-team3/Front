@@ -1,6 +1,8 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 // pages
@@ -40,27 +42,54 @@ class _EditProfileState extends State<EditProfile> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 800, // 최대 가로 크기
-      maxHeight: 800, // 최대 세로 크기
-      imageQuality: 80, // 이미지 품질 (0~100, 100이 최상)
-    );
+    if (kIsWeb) {
+      FilePickerResult? pickedFile = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
 
-    if (pickedFile != null) {
-      File imageFile = File(pickedFile.path);
+      if (pickedFile != null) {
+        Uint8List? imageBytes = pickedFile.files.single.bytes;
+        String? fileName = pickedFile.files.single.name;
 
-      try {
-        // setProfile 함수 호출 및 프로필 이미지 업데이트
-        String userId = context.read<UserProvider>().id;
-        Uint8List imageBytes =
-            await UserApi.setProfile(userId, imageFile, context);
+        if (imageBytes != null) {
+          try {
+            // setProfile 호출 및 프로필 업데이트
+            String userId = context.read<UserProvider>().id;
+            Uint8List updatedProfileImage = await UserApi.setProfileForWeb(
+                userId, imageBytes, fileName, context);
 
-        Provider.of<UserProvider>(context, listen: false)
-            .setUserProfile(imageBytes);
-      } catch (e) {
-        // 오류 처리
-        print('이미지 업로드 실패: $e');
+            Provider.of<UserProvider>(context, listen: false)
+                .setUserProfile(updatedProfileImage);
+          } catch (e) {
+            // 오류 처리
+            print('이미지 업로드 실패: $e');
+          }
+        }
+      }
+    } else {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800, // 최대 가로 크기
+        maxHeight: 800, // 최대 세로 크기
+        imageQuality: 80, // 이미지 품질 (0~100, 100이 최상)
+      );
+
+      if (pickedFile != null) {
+        File imageFile = File(pickedFile.path);
+
+        try {
+          // setProfile 함수 호출 및 프로필 이미지 업데이트
+          String userId = context.read<UserProvider>().id;
+          Uint8List imageBytes =
+              await UserApi.setProfile(userId, imageFile, context);
+
+          Provider.of<UserProvider>(context, listen: false)
+              .setUserProfile(imageBytes);
+        } catch (e) {
+          // 오류 처리
+          print('이미지 업로드 실패: $e');
+        }
       }
     }
   }

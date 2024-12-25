@@ -202,6 +202,40 @@ class UserApi {
     }
   }
 
+  static Future<Uint8List> setProfileForWeb(String id, Uint8List imageBytes,
+      String fileName, BuildContext context) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.https(
+      serverIP,
+      '/user/profile/upload',
+      {"id": id},
+    );
+
+    // multipart/form-data 요청 생성
+    var request = http.MultipartRequest('POST', url);
+
+    // 파일 추가
+    request.files.add(http.MultipartFile.fromBytes(
+      'file',
+      imageBytes,
+      filename: fileName,
+      contentType: MediaType('image', fileName.split('.').last),
+    ));
+
+    var response = await request.send();
+
+    // 응답 처리
+    if (response.statusCode == 200) {
+      Uint8List profileImageBytes = await UserApi.getProfile(id);
+      return profileImageBytes;
+    } else {
+      throw Exception(
+        '이미지 업로드 실패: ${response.statusCode}',
+      );
+    }
+  }
+
   static Future<dynamic> getParameters(
       String path, String param, String value) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
