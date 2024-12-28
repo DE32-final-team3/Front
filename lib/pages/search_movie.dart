@@ -15,7 +15,7 @@ class SearchMovie extends StatefulWidget {
 class _SearchMovieState extends State<SearchMovie> {
   final TextEditingController _searchController = TextEditingController();
 
-  List<Map<String, dynamic>> searchdMovies = [];
+  List<Map<String, dynamic>> searchedMovies = [];
   List<Map<String, dynamic>> selectedMovies = [];
 
   @override
@@ -34,11 +34,11 @@ class _SearchMovieState extends State<SearchMovie> {
       List<Map<String, dynamic>> movies =
           List<Map<String, dynamic>>.from(await MovieApi.searchMovies(query));
       setState(() {
-        searchdMovies = movies; // 검색된 영화 리스트 상태 업데이트
+        searchedMovies = movies; // 검색된 영화 리스트 상태 업데이트
       });
 
       // 검색된 영화가 없을 경우 Snackbar 띄우기
-      if (searchdMovies.isEmpty) {
+      if (searchedMovies.isEmpty) {
         _searchController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -129,7 +129,7 @@ class _SearchMovieState extends State<SearchMovie> {
               Expanded(
                 child: Container(
                   color: Colors.grey[200],
-                  child: searchdMovies.isEmpty
+                  child: searchedMovies.isEmpty
                       ? const Center(
                           child: Text(
                             '영화를 검색해주세요',
@@ -137,9 +137,9 @@ class _SearchMovieState extends State<SearchMovie> {
                           ),
                         )
                       : ListView.builder(
-                          itemCount: searchdMovies.length,
+                          itemCount: searchedMovies.length,
                           itemBuilder: (context, index) {
-                            var movie = searchdMovies[index];
+                            var movie = searchedMovies[index];
                             bool isSelected = selectedMovies.contains(movie);
                             return GestureDetector(
                               onTap: () {
