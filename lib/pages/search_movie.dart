@@ -107,50 +107,25 @@ class _SearchMovieState extends State<SearchMovie> {
               // 검색창과 검색 버튼
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.center, // 버튼과 텍스트 필드를 수평 중앙 정렬
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: const InputDecoration(
-                          hintText: 'Search...',
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 16),
-                        onSubmitted: (_) {
-                          _search(); //_search();
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 50, // 정사각형 크기
-                      height: 50, // 정사각형 크기
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // 검색 버튼 클릭 시 동작
-                          _search();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4.0),
-                          ),
-                          padding: EdgeInsets.zero, // 패딩 제거
-                          side: const BorderSide(
-                            color: Colors.blue, // 테두리 색상
-                            width: 2, // 테두리 두께
-                          ),
-                        ),
-                        child: const Icon(Icons.search),
-                      ),
-                    ),
-                  ],
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                      hintText: 'Search...',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          onPressed: () {
+                            _search();
+                          },
+                          icon: const Icon(Icons.search))),
+                  style: const TextStyle(fontSize: 16),
+                  onSubmitted: (_) {
+                    _search(); //_search();
+                  },
                 ),
               ),
               // 결과를 띄워줄 공간
-              const SizedBox(width: 16),
+              const SizedBox(width: 12.0),
               Expanded(
                 child: Container(
                   color: Colors.grey[200],
