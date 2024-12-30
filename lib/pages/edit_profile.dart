@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'dart:io';
 // pages
 import 'package:cinetalk/main.dart';
+import 'package:cinetalk/init_page/login.dart'; // Add this line to import the Login class
 // features
 import 'package:cinetalk/features/user_provider.dart';
 import 'package:cinetalk/features/movie_provider.dart';
@@ -193,6 +194,70 @@ class _EditProfileState extends State<EditProfile> {
     return null;
   }
 
+  Future<void> _deleteAccount() async {
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('회원탈퇴'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('비밀번호를 입력해주세요.'),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final password = passwordController.text;
+                final success = await UserApi.deleteUser(password);
+
+                if (success) {
+                  await Provider.of<UserProvider>(context, listen: false)
+                      .clearUser();
+                  await Provider.of<MovieProvider>(context, listen: false)
+                      .clearMovie();
+                  await Auth.clearToken();
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const Login()),
+                    (Route<dynamic> route) => false,
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('회원탈퇴가 완료되었습니다.'),
+                      duration: Duration(milliseconds: 500),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('회원탈퇴 실패. 비밀번호를 확인해주세요.'),
+                      duration: Duration(milliseconds: 500),
+                    ),
+                  );
+                }
+              },
+              child: const Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // 메모리 관리를 위해 controller 정리
   @override
   void dispose() {
@@ -372,9 +437,7 @@ class _EditProfileState extends State<EditProfile> {
             Align(
               alignment: Alignment.bottomRight,
               child: ElevatedButton(
-                onPressed: () {
-                  // 회원탈퇴 로직 추가
-                },
+                onPressed: _deleteAccount,
                 child: const Text("회원탈퇴"),
               ),
             ),
