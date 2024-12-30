@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cinetalk/init_page/login.dart';
 // features
 import 'package:cinetalk/features/api.dart';
+import 'package:flutter/services.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -245,10 +246,14 @@ class _SignUpState extends State<SignUp> {
       final nickname = _nicknameController.text;
       final password = _passwordController.text;
 
+      // 기본 프로필 이미지 로드
+      ByteData bytes = await rootBundle.load('assets/default_profile.jpg');
+      List<int> imageBytes = bytes.buffer.asUint8List();
+
       Map<String, dynamic> params = {
         'email': email,
         'nickname': nickname,
-        'profile': '',
+        'profile': imageBytes,
         'password': password
       };
 
