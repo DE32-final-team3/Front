@@ -211,159 +211,171 @@ class _EditProfileState extends State<EditProfile> {
       appBar: AppBar(title: const Text('Edit Profile')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            // 이메일
-            Center(
-              child: Text(
-                Provider.of<UserProvider>(context).email,
-                style: const TextStyle(
-                  fontSize: 20,
-                  color: Colors.indigo,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20), // 이메일과 프로필 사진 사이 여백
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    await Provider.of<UserProvider>(context, listen: false)
-                        .clearUser();
-                    await Provider.of<MovieProvider>(context, listen: false)
-                        .clearMovie();
-                    await Auth.clearToken();
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => MyApp()),
-                      (Route<dynamic> route) => false,
-                    );
-                  },
-                  child: const Text("Logout"),
+                // 이메일
+                Center(
+                  child: Text(
+                    Provider.of<UserProvider>(context).email,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      color: Colors.indigo,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20), // 이메일과 프로필 사진 사이 여백
+                // 프로필 사진과 편집 버튼을 가운데 정렬
+                Center(
+                  child: Column(
+                    children: [
+                      // Consumer를 사용하여 profile 상태 변경 시 이미지 자동 갱신
+                      Consumer<UserProvider>(
+                        builder: (context, userProvider, child) {
+                          return CircleAvatar(
+                            radius: 80,
+                            backgroundImage: userProvider.profile != null
+                                ? MemoryImage(userProvider.profile as Uint8List)
+                                : const AssetImage(
+                                    'assets/default_profile.jpg'),
+                            child: userProvider.profile == null
+                                ? const Icon(Icons.person, size: 80)
+                                : null,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10), // 프로필 사진과 버튼 사이 여백
+                      ElevatedButton(
+                        onPressed: _pickImage,
+                        child: const Text('프로필 사진 변경'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20), // 프로필 사진과 입력 필드 사이 여백
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                          controller: _nicknameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nickname',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.person),
+                          ),
+                          onFieldSubmitted: (_) => _validateNickname()),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                        onPressed: () {
+                          _validateNickname();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: const Text('닉네임 변경')),
+                  ],
+                ),
+                // 닉네임 입력란
+                const SizedBox(height: 10),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      // 비밀번호 입력란
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: !_passwordVisible,
+                        focusNode: _passwordFocusNode,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.lock),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _passwordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _passwordVisible = !_passwordVisible;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: _validatePassword,
+                        onFieldSubmitted: (_) {
+                          // Enter 키를 누르면 "Confirm Password"로 이동
+                          FocusScope.of(context)
+                              .requestFocus(_confirmPasswordFocusNode);
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      // 비밀번호 확인 입력란
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        obscureText: !_confirmPasswordVisible,
+                        focusNode: _confirmPasswordFocusNode,
+                        decoration: InputDecoration(
+                          labelText: 'Confirm Password',
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.check),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _confirmPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _confirmPasswordVisible =
+                                    !_confirmPasswordVisible;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: _validateConfirmPassword,
+                        onFieldSubmitted: (_) => _updatePassword(),
+                      ),
+                      const SizedBox(height: 10),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: _updatePassword,
+                          child: const Text('비밀번호 변경'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            //const SizedBox(height: 10),
-            // 프로필 사진과 편집 버튼을 가운데 정렬
-            Center(
-              child: Column(
-                children: [
-                  // Consumer를 사용하여 profile 상태 변경 시 이미지 자동 갱신
-                  Consumer<UserProvider>(
-                    builder: (context, userProvider, child) {
-                      return CircleAvatar(
-                        radius: 80,
-                        backgroundImage: userProvider.profile != null
-                            ? MemoryImage(userProvider.profile as Uint8List)
-                            : null,
-                        child: userProvider.profile == null
-                            ? const Icon(Icons.person, size: 80)
-                            : null,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 10), // 프로필 사진과 버튼 사이 여백
-                  ElevatedButton(
-                    onPressed: _pickImage,
-                    child: const Text('프로필 사진 변경'),
-                  ),
-                ],
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await Provider.of<UserProvider>(context, listen: false)
+                      .clearUser();
+                  await Provider.of<MovieProvider>(context, listen: false)
+                      .clearMovie();
+                  await Auth.clearToken();
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => MyApp()),
+                    (Route<dynamic> route) => false,
+                  );
+                },
+                child: const Text("로그아웃"),
               ),
             ),
-            const SizedBox(height: 20), // 프로필 사진과 입력 필드 사이 여백
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                      controller: _nicknameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nickname',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                      onFieldSubmitted: (_) => _validateNickname()),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                    onPressed: () {
-                      _validateNickname();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                    child: const Text('닉네임 변경')),
-              ],
-            ),
-            // 닉네임 입력란
-            const SizedBox(height: 10),
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  // 비밀번호 입력란
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: !_passwordVisible,
-                    focusNode: _passwordFocusNode,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _passwordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _passwordVisible = !_passwordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    validator: _validatePassword,
-                    onFieldSubmitted: (_) {
-                      // Enter 키를 누르면 "Confirm Password"로 이동
-                      FocusScope.of(context)
-                          .requestFocus(_confirmPasswordFocusNode);
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  // 비밀번호 확인 입력란
-                  TextFormField(
-                    controller: _confirmPasswordController,
-                    obscureText: !_confirmPasswordVisible,
-                    focusNode: _confirmPasswordFocusNode,
-                    decoration: InputDecoration(
-                      labelText: 'Confirm Password',
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.check),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _confirmPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _confirmPasswordVisible = !_confirmPasswordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    validator: _validateConfirmPassword,
-                    onFieldSubmitted: (_) => _updatePassword(),
-                  ),
-                  const SizedBox(height: 10),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: _updatePassword,
-                      child: const Text('비밀번호 변경'),
-                    ),
-                  ),
-                ],
+            Align(
+              alignment: Alignment.bottomRight,
+              child: ElevatedButton(
+                onPressed: () {
+                  // 회원탈퇴 로직 추가
+                },
+                child: const Text("회원탈퇴"),
               ),
             ),
           ],
