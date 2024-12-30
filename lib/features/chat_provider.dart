@@ -10,7 +10,6 @@ class ChatProvider with ChangeNotifier {
   final List<String> _messages = [];
   List<Map<String, dynamic>> _chatList = [];
   int _totalUnreadCount = 0;
-  bool isLoading = true;
 
   List<Map<String, dynamic>> get chatList => _chatList;
   int get totalUnreadCount => _totalUnreadCount;
@@ -22,21 +21,16 @@ class ChatProvider with ChangeNotifier {
   }
 
   Future<void> setChatList(String userId) async {
-    isLoading = true;
-    notifyListeners();
-
     try {
       final chatRooms = await fetchChatRooms(userId);
       _chatList = chatRooms;
       setTotalUnreadCount();
+      notifyListeners();
 
       _chatList
           .sort((a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
     } catch (e) {
       print("Error setting chat rooms: $e");
-    } finally {
-      isLoading = false;
-      notifyListeners();
     }
   }
 

@@ -19,13 +19,6 @@ class Talk extends StatelessWidget {
       ),
       body: Consumer<ChatProvider>(
         builder: (context, chatProvider, child) {
-          if (chatProvider.isLoading) {
-            chatProvider.setChatList(userId);
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-
           return chatProvider.chatList.isEmpty
               ? const Center(
                   child: Text(

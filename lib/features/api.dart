@@ -358,6 +358,33 @@ class UserApi {
     var response = await http.delete(url);
     return response.statusCode;
   }
+
+  static Future<bool> deleteUser(String password) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+    String? token = await Auth.getToken();
+
+    var url = Uri.https(
+      serverIP,
+      '/user/delete',
+    );
+
+    var response = await http.delete(
+      url,
+      headers: {
+        'accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'password': password}),
+    );
+
+    if (response.statusCode == 200) {
+      await _storage.delete(key: 'access_token');
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
 
 class MovieApi {
