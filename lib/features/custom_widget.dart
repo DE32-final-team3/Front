@@ -30,7 +30,7 @@ class CustomWidget {
     );
   }
 
-  static Future<void> _launchMoviePage(String? movieId) async {
+  static Future<void> launchMoviePage(String? movieId) async {
     Uri url = Uri.parse('https://www.themoviedb.org/movie/$movieId');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
@@ -53,7 +53,7 @@ class CustomWidget {
             movie['poster_path'] != null
                 ? GestureDetector(
                     onTap: () {
-                      _launchMoviePage(
+                      launchMoviePage(
                           movie['movie_id'].toString()); // 포스터 클릭 시 영화 페이지로 이동
                     },
                     child: ClipRRect(
@@ -95,8 +95,8 @@ class CustomWidget {
             movie['poster_path'] != null
                 ? GestureDetector(
                     onTap: () {
-                      _launchMoviePage(
-                          movie['movie_id'].toString()); // 포스터 클릭 시 영화 페이지로 이동
+                      launchMoviePage(
+                          movie['id'].toString()); // 포스터 클릭 시 영화 페이지로 이동
                     },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),

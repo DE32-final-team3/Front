@@ -1,11 +1,12 @@
 import 'dart:typed_data';
-import 'package:cinetalk/features/custom_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:cinetalk/features/api.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
+// features
+import 'package:cinetalk/features/api.dart';
+import 'package:cinetalk/features/custom_widget.dart';
 
 class ChatRoom extends StatefulWidget {
   final String user1;
@@ -85,18 +86,23 @@ class _ChatRoomState extends State<ChatRoom> {
             formattedTime = DateFormat('MM/dd HH:mm').format(kstTime);
           }
 
-          if (decodedMessage['message'].contains('poster_path')) {
-            final poster_path = decodedMessage['message'].split(' ')[1].trim();
+          if (decodedMessage['message'].contains('movie_id') &&
+              decodedMessage['message'].contains('poster_path')) {
+            Map<String, dynamic> movie = jsonDecode(decodedMessage['message']);
+            print(
+                "movie_id ${movie['movie_id']}, poster ${movie['poster_path']}");
             setState(() {
               _messages.add({
                 "sender": decodedMessage['sender'],
-                "shared_movie": poster_path,
+                "poster_path": movie['poster_path'],
+                "movie_id": movie['movie_id'].toString(),
                 "timestamp": formattedTime ?? 'Unknown time',
               });
 
               _sharedMovies.add({
                 "sender": decodedMessage['sender'],
-                "shared_movie": poster_path,
+                "poster_path": movie['poster_path'],
+                "movie_id": movie["movie_id"].toString(),
                 "timestamp": formattedTime ?? 'Unknown time',
               });
             });
@@ -151,10 +157,11 @@ class _ChatRoomState extends State<ChatRoom> {
 
   void _shareMovie(Map<String, dynamic> movie) {
     try {
-      final message =
-          'poster_path https://image.tmdb.org/t/p/w500${movie['poster_path']}';
-
-      _channel.sink.add(message);
+      Map<String, dynamic> message = {
+        'movie_id': movie['id'].toString(),
+        'poster_path': 'https://image.tmdb.org/t/p/w500${movie['poster_path']}'
+      };
+      _channel.sink.add(jsonEncode(message));
       _focusNode.requestFocus();
       _scrollToBottom();
     } catch (_) {}
@@ -379,34 +386,38 @@ class _ChatRoomState extends State<ChatRoom> {
                   ),
                 ),
               ),
+              // ListView.builder를 Expanded로 감싸지 않음
               Expanded(
                 child: ListView.builder(
-                    itemCount: _sharedMovies.length,
-                    itemBuilder: (context, index) {
-                      final movie = _sharedMovies[index];
-                      return ListTile(
-                        title: Image.network(
-                          movie['shared_movie']!,
-                          // height: 20, // 이미지의 높이 조정
-                          // width: 120, // 이미지의 너비 조정
-                          fit: BoxFit.cover, // 이미지 비율 맞추기
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Text('Image not available');
-                          },
-                        ),
-                        subtitle: Text(movie['timestamp'] ?? 'Unknown'),
-                      );
-                    }),
+                  itemCount: _sharedMovies.length,
+                  itemBuilder: (context, index) {
+                    final movie = _sharedMovies[index];
+                    return ListTile(
+                      onTap: () {
+                        CustomWidget.launchMoviePage(movie['movie_id']);
+                      },
+                      title: Image.network(
+                        movie['poster_path']!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Text('Image not available');
+                        },
+                      ),
+                      subtitle: Text(movie['timestamp'] ?? 'Unknown'),
+                    );
+                  },
+                ),
               ),
               Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: IconButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      icon: Icon(Icons.exit_to_app)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    icon: Icon(Icons.exit_to_app),
+                  ),
                 ),
               ),
             ],
@@ -463,16 +474,24 @@ class _ChatRoomState extends State<ChatRoom> {
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
                                 padding: const EdgeInsets.all(10),
-                                child: message.containsKey('shared_movie')
-                                    ? Image.network(
-                                        message['shared_movie']!,
-                                        width: 120,
-                                        height: 200,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                          return const Text(
-                                              'Image not available');
+                                child: message.containsKey('poster_path') &&
+                                        message.containsKey('movie_id')
+                                    ? GestureDetector(
+                                        onTap: () {
+                                          // 클릭 이벤트 처리
+                                          CustomWidget.launchMoviePage(
+                                              message['movie_id']);
                                         },
+                                        child: Image.network(
+                                          message['poster_path']!,
+                                          width: 120,
+                                          height: 200,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return const Text(
+                                                'Image not available');
+                                          },
+                                        ),
                                       )
                                     : Text(
                                         message['message']!,

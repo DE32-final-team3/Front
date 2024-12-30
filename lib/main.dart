@@ -7,6 +7,7 @@ import 'package:cinetalk/init_page/page_list.dart';
 // features
 import 'package:cinetalk/features/user_provider.dart';
 import 'package:cinetalk/features/movie_provider.dart';
+import 'package:cinetalk/features/chat_provider.dart';
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/auth.dart';
 
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => UserProvider()),
         ChangeNotifierProvider(create: (context) => MovieProvider()),
+        ChangeNotifierProvider(create: (context) => ChatProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
