@@ -44,15 +44,17 @@ class _TalkState extends State<Talk> {
               "profileImage": profileImageBytes,
               "nickname": room['partner_nickname'] ?? "Unknown",
               "lastMessage": room['last_message']?['text'] ?? "No messages yet",
-              "timestamp": room['last_message']?['timestamp'],
+              "timestamp": room['last_message']?['timestamp'] != null
+                  ? int.tryParse(room['last_message']['timestamp']) ?? 0
+                  : 0,
               "user_id": partnerId,
               "unreadCount": room['unread_count'] ?? 0,
             };
           }).toList(),
         );
 
-        updatedChatList.sort((a, b) =>
-            (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
+        updatedChatList.sort(
+            (a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
 
         setState(() {
           chatList = updatedChatList;
@@ -141,7 +143,9 @@ class _TalkState extends State<Talk> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => ChatRoom(
-                          user1: Provider.of<UserProvider>(context, listen: false).id,
+                          user1:
+                              Provider.of<UserProvider>(context, listen: false)
+                                  .id,
                           user2: chat['user_id'],
                           user2Nickname: chat['nickname'],
                         ),
@@ -187,7 +191,7 @@ class ChatBox extends StatelessWidget {
         leading: CircleAvatar(
           backgroundImage: profileImage.isNotEmpty
               ? MemoryImage(profileImage)
-              : const AssetImage('assets/default_profile.png') as ImageProvider,
+              : const AssetImage('assets/default_profile.jpg') as ImageProvider,
         ),
         title: Text(
           nickname,
