@@ -1,3 +1,4 @@
+import 'package:cinetalk/features/chat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -71,6 +72,7 @@ class UserApi {
       // provider에 user 정보 저장
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final movieProvider = Provider.of<MovieProvider>(context, listen: false);
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
 
       userProvider.setUserId(user['id']);
       userProvider.setUserEmail(user['email']);
@@ -79,6 +81,8 @@ class UserApi {
 
       List<int> movieList = List<int>.from(user['movie_list']);
       userProvider.setMovieList(movieList);
+      chatProvider.setChatList(user['id']);
+      chatProvider.connect(user['id']);
 
       // 사용자 영화 리스트 처리
       if (user['movie_list'].isNotEmpty) {

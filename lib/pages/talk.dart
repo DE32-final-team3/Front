@@ -9,89 +9,63 @@ import 'package:cinetalk/features/chat_provider.dart'; // ChatProvider 추가
 class Talk extends StatelessWidget {
   const Talk({super.key});
 
-  Future<void> showDeleteConfirmationDialog(
-      BuildContext context, int index) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('채팅방을 나가시겠습니까?'),
-          content: const Text('이 채팅방을 삭제하면 복구할 수 없습니다.'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('No'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text('Yes'),
-              onPressed: () {
-                context.read<ChatProvider>().chatList.removeAt(index);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
     final userId = Provider.of<UserProvider>(context, listen: false).id;
-
-    if (chatProvider.isLoading) {
-      chatProvider.fetchChatRooms(userId);
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Talk"),
       ),
-      body: chatProvider.chatList.isEmpty
-          ? const Center(
-              child: Text(
-                '생성된 채팅방이 없습니다.',
-                style: TextStyle(fontSize: 18),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: chatProvider.chatList.length,
-              itemBuilder: (context, index) {
-                final chat = chatProvider.chatList[index];
-                return GestureDetector(
-                  onLongPress: () =>
-                      showDeleteConfirmationDialog(context, index),
-                  onTap: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatRoom(
-                          user1: userId,
-                          user2: chat['user_id'],
-                          user2Nickname: chat['nickname'],
-                        ),
+      body: Consumer<ChatProvider>(
+        builder: (context, chatProvider, child) {
+          if (chatProvider.isLoading) {
+            chatProvider.setChatList(userId);
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          return chatProvider.chatList.isEmpty
+              ? const Center(
+                  child: Text(
+                    '생성된 채팅방이 없습니다.',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: chatProvider.chatList.length,
+                  itemBuilder: (context, index) {
+                    final chat = chatProvider.chatList[index];
+                    return GestureDetector(
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatRoom(
+                              user1: userId,
+                              user2: chat['user_id'],
+                              user2Nickname: chat['nickname'],
+                            ),
+                          ),
+                        );
+
+                        if (result == true) {
+                          await chatProvider.setChatList(userId);
+                        }
+                      },
+                      child: ChatBox(
+                        profileImage: chat['profileImage'],
+                        nickname: chat['nickname'],
+                        lastMessage: chat['lastMessage'],
+                        unreadCount: chat['unreadCount'],
                       ),
                     );
-
-                    if (result == true) {
-                      await chatProvider.fetchChatRooms(userId);
-                    }
                   },
-                  child: ChatBox(
-                    profileImage: chat['profileImage'],
-                    nickname: chat['nickname'],
-                    lastMessage: chat['lastMessage'],
-                    unreadCount: chat['unreadCount'],
-                  ),
                 );
-              },
-            ),
+        },
+      ),
     );
   }
 }
