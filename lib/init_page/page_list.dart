@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:badges/badges.dart' as custom_badge;
+import 'package:provider/provider.dart';
 // pages
 import 'package:cinetalk/pages/mypage.dart';
 import 'package:cinetalk/pages/curator.dart';
 import 'package:cinetalk/pages/talk.dart';
 import 'package:cinetalk/pages/cinemates.dart';
+// features
+import 'package:cinetalk/features/chat_provider.dart';
 
 class PageList extends StatelessWidget {
   @override
@@ -35,20 +39,37 @@ class _PageListState extends State<Pages> {
             _currentIndex = index;
           });
         },
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
+        items: <BottomNavigationBarItem>[
+          const BottomNavigationBarItem(
             icon: Icon(Icons.account_box_outlined),
             label: 'My Page',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.movie),
             label: 'Curator',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
+            icon: Consumer<ChatProvider>(
+              builder: (context, chatProvider, child) {
+                int unreadCount =
+                    chatProvider.totalUnreadCount; // unread count 가져오기
+
+                if (unreadCount > 0) {
+                  return custom_badge.Badge(
+                    badgeContent: Text(
+                      unreadCount.toString(),
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    child: Icon(Icons.chat_bubble_outline),
+                  );
+                } else {
+                  return Icon(Icons.chat_bubble_outline);
+                }
+              },
+            ),
             label: 'Talk',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.family_restroom_outlined),
             label: 'Cinemates',
           ),

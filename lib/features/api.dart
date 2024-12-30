@@ -1,3 +1,4 @@
+import 'package:cinetalk/features/chat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -71,6 +72,7 @@ class UserApi {
       // provider에 user 정보 저장
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final movieProvider = Provider.of<MovieProvider>(context, listen: false);
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
 
       userProvider.setUserId(user['id']);
       userProvider.setUserEmail(user['email']);
@@ -79,6 +81,8 @@ class UserApi {
 
       List<int> movieList = List<int>.from(user['movie_list']);
       userProvider.setMovieList(movieList);
+      chatProvider.setChatList(user['id']);
+      chatProvider.connect(user['id']);
 
       // 사용자 영화 리스트 처리
       if (user['movie_list'].isNotEmpty) {
@@ -104,13 +108,13 @@ class UserApi {
   }
 
   static Future<int> postParameters(
-      String path, String param, String value) async {
+      String path, Map<String, String> params) async {
     String? serverIP = dotenv.env['SERVER_IP']!;
 
     var url = Uri.https(
       serverIP, // 호스트 주소
       path, // 경로
-      {param: value},
+      params,
     );
 
     var response = await http.post(url);
@@ -188,6 +192,40 @@ class UserApi {
         contentType: MediaType('image', extension!));
 
     request.files.add(file);
+
+    var response = await request.send();
+
+    // 응답 처리
+    if (response.statusCode == 200) {
+      Uint8List profileImageBytes = await UserApi.getProfile(id);
+      return profileImageBytes;
+    } else {
+      throw Exception(
+        '이미지 업로드 실패: ${response.statusCode}',
+      );
+    }
+  }
+
+  static Future<Uint8List> setProfileForWeb(String id, Uint8List imageBytes,
+      String fileName, BuildContext context) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.https(
+      serverIP,
+      '/user/profile/upload',
+      {"id": id},
+    );
+
+    // multipart/form-data 요청 생성
+    var request = http.MultipartRequest('POST', url);
+
+    // 파일 추가
+    request.files.add(http.MultipartFile.fromBytes(
+      'file',
+      imageBytes,
+      filename: fileName,
+      contentType: MediaType('image', fileName.split('.').last),
+    ));
 
     var response = await request.send();
 
@@ -306,6 +344,19 @@ class UserApi {
     var response = await http.get(url);
     Map<String, dynamic> user = jsonDecode(utf8.decode(response.bodyBytes));
     return user;
+  }
+
+  static Future<int> unfollow(String path, Map<String, String> params) async {
+    String? serverIP = dotenv.env['SERVER_IP']!;
+
+    var url = Uri.https(
+      serverIP, // 호스트 주소
+      path, // 경로
+      params,
+    );
+
+    var response = await http.delete(url);
+    return response.statusCode;
   }
 }
 

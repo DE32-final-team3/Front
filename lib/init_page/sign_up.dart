@@ -16,6 +16,7 @@ class _SignUpState extends State<SignUp> {
   final _nicknameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _codeController = TextEditingController();
 
   final _passwordFocusNode = FocusNode();
   final _confirmPasswordFocusNode = FocusNode();
@@ -53,27 +54,116 @@ class _SignUpState extends State<SignUp> {
 
     // API 호출 코드
     var statusCode =
-        await UserApi.postParameters("/user/check/email", "email", email);
+        await UserApi.postParameters("/user/check/email", {"email": email});
+    _showVerificationDialog();
     if (statusCode == 200) {
       setState(() {
         _isEmailChecked = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('사용 가능한 이메일입니다'),
-            duration: Duration(milliseconds: 500)),
-      );
+      _showAlertDialog(context, '사용 가능한 이메일입니다, 인증 코드를 확인해주세요.');
     } else {
       setState(() {
         _isEmailChecked = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("이미 사용 중인 이메일입니다."),
-            duration: Duration(milliseconds: 500)),
-      );
+      _showAlertDialog(context, "이미 사용 중인 이메일입니다.");
     }
     return;
+  }
+
+  void _showVerificationDialog() {
+    _codeController.clear();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8, // 너비를 화면의 80%로 설정
+            height: MediaQuery.of(context).size.height * 0.5, // 높이를 화면의 50%로 설정
+            padding: const EdgeInsets.all(16.0),
+            child: Scaffold(
+              appBar: AppBar(
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ),
+              body: Builder(
+                builder: (BuildContext innerContext) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "이메일 인증",
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _codeController,
+                        decoration: const InputDecoration(
+                          labelText: '인증 코드',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () async {
+                          var statusCode = await _verifyCode();
+                          if (statusCode == 200) {
+                            Navigator.of(context, rootNavigator: true).pop();
+                            _showAlertDialog(innerContext, "이메일 인증이 완료되었습니다.");
+                          } else {
+                            _showAlertDialog(innerContext, "인증 코드가 유효하지 않습니다.");
+                          }
+                        },
+                        child: const Text('인증 완료'),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAlertDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('알림'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<int> _verifyCode() async {
+    final code = _codeController.text;
+
+    // API 호출 코드
+    var statusCode = await UserApi.postParameters(
+        "/user/verify/email", {"email": _emailController.text, "code": code});
+    return statusCode;
   }
 
   void _validateNickname() async {
@@ -90,7 +180,7 @@ class _SignUpState extends State<SignUp> {
 
     // API 호출 코드
     var statusCode = await UserApi.postParameters(
-        "user/check/nickname", "nickname", nickname);
+        "user/check/nickname", {"nickname": nickname});
     if (statusCode == 200) {
       setState(() {
         _isNicknameChecked = true;
@@ -243,7 +333,7 @@ class _SignUpState extends State<SignUp> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
-                    child: const Text('중복 체크'),
+                    child: const Text('이메일 인증'),
                   ),
                 ],
               ),
@@ -273,7 +363,7 @@ class _SignUpState extends State<SignUp> {
                       _validateNickname();
                     }, //  _checkNickname,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 19),
                     ),
                     child: const Text("중복 체크"),
                   )

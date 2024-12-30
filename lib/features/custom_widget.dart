@@ -1,5 +1,10 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+// features
+import 'package:cinetalk/features/api.dart';
+import 'package:cinetalk/features/user_provider.dart';
 
 class CustomWidget {
   static void showLoadingDialog(BuildContext context) {
@@ -25,7 +30,7 @@ class CustomWidget {
     );
   }
 
-  static Future<void> _launchMoviePage(String? movieId) async {
+  static Future<void> launchMoviePage(String? movieId) async {
     Uri url = Uri.parse('https://www.themoviedb.org/movie/$movieId');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
@@ -48,7 +53,7 @@ class CustomWidget {
             movie['poster_path'] != null
                 ? GestureDetector(
                     onTap: () {
-                      _launchMoviePage(
+                      launchMoviePage(
                           movie['movie_id'].toString()); // 포스터 클릭 시 영화 페이지로 이동
                     },
                     child: ClipRRect(
@@ -90,8 +95,8 @@ class CustomWidget {
             movie['poster_path'] != null
                 ? GestureDetector(
                     onTap: () {
-                      _launchMoviePage(
-                          movie['movie_id'].toString()); // 포스터 클릭 시 영화 페이지로 이동
+                      launchMoviePage(
+                          movie['id'].toString()); // 포스터 클릭 시 영화 페이지로 이동
                     },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),
@@ -206,28 +211,116 @@ class CustomWidget {
     );
   }
 
-  static void showMovieListDialog(
+  static Future<void> showUserProfile(String userId, context) async {
+    try {
+      // Fetch user info and movies
+      final response = await UserApi.getFollowInfo(userId);
+
+      if (response == null ||
+          !response.containsKey('movie_list') ||
+          !response.containsKey('nickname')) {
+        throw Exception("Failed to fetch user info.");
+      }
+
+      final movieIds = response['movie_list'] as List<dynamic>;
+      final nickname = response['nickname'] as String;
+
+      // Fetch profile image separately
+      Uint8List? profileImage = await UserApi.getProfile(userId);
+
+      // Fetch movie details if available
+      List<Map<String, dynamic>> movies = [];
+      if (movieIds.isNotEmpty) {
+        movies = await MovieApi.fetchMovies(movieIds.cast<int>()) ?? [];
+      }
+
+      // Display the unified profile dialog
+      profileDialog({
+        "id": userId,
+        "nickname": nickname,
+        "profile": profileImage,
+      }, context, movies);
+    } catch (e) {
+      print("Error fetching profile for user $userId: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to fetch profile for user $userId")),
+      );
+    }
+  }
+
+  static Future<void> profileDialog(
+    Map<String, dynamic> user,
     BuildContext context,
-    String nickname,
     List<Map<String, dynamic>> movies,
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-
     final crossAxisCount = (screenWidth / 150).floor();
 
-    showDialog(
+    return showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(
-            "$nickname님의 영화 리스트",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          content: movies.isEmpty
-              ? const Text("No movies found.")
-              : SizedBox(
-                  height: screenHeight * 0.6,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Consumer<UserProvider>(
+                    builder: (context, provider, child) {
+                      final isFollowing =
+                          provider.following.contains(user['id']);
+                      return IconButton(
+                        icon: Icon(
+                          isFollowing ? Icons.favorite : Icons.favorite_outline,
+                          color: Colors.red,
+                          size: 30,
+                        ),
+                        onPressed: () async {
+                          if (isFollowing) {
+                            await UserApi.unfollow(
+                              "/user/follow/delete",
+                              {
+                                "id": provider.id,
+                                "following_id": user['id'],
+                              },
+                            );
+                            provider.unfollow(user['id']);
+                          } else {
+                            await UserApi.postParameters(
+                              "/user/follow",
+                              {
+                                "id": provider.id,
+                                "following_id": user['id'],
+                              },
+                            );
+                            provider.follow(user['id']);
+                          }
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+              CircleAvatar(
+                radius: 40,
+                backgroundImage: user['profile'] != null
+                    ? MemoryImage(user['profile'])
+                    : null,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                user['nickname'],
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (movies.isNotEmpty)
+                SizedBox(
+                  height: screenHeight * 0.4,
                   width: screenWidth * 0.6,
                   child: GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -263,7 +356,11 @@ class CustomWidget {
                       );
                     },
                   ),
-                ),
+                )
+              else
+                const Text("No movies found."),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
