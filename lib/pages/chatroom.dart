@@ -1,9 +1,9 @@
+import 'dart:convert';
 import 'dart:typed_data';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'dart:convert';
-import 'package:intl/intl.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/custom_widget.dart';
@@ -34,7 +34,6 @@ class _ChatRoomState extends State<ChatRoom> {
   final List<Map<String, String>> _messages = [];
   final List<Map<String, dynamic>> _sharedMovies = [];
   String _statusMessage = 'Connecting to server...';
-  bool _isConnected = true;
   Uint8List? _user2ProfileImage;
 
   @override
@@ -136,7 +135,6 @@ class _ChatRoomState extends State<ChatRoom> {
 
   void _disconnectWebSocket() {
     setState(() {
-      _isConnected = false;
       _statusMessage = 'Disconnected from the server';
     });
     _channel.sink.close();
