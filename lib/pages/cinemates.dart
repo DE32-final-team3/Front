@@ -16,15 +16,16 @@ class Cinemates extends StatefulWidget {
 }
 
 class _CinamatesState extends State<Cinemates> {
-  List<Map<String, dynamic>> similarUser = [];
+  late Future<List<Map<String, dynamic>>> _similarUserFuture;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadSimilarUser(); // Fetch users when dependencies change
+    _similarUserFuture =
+        _loadSimilarUser(); // Fetch users when dependencies change
   }
 
-  Future<void> _loadSimilarUser() async {
+  Future<List<Map<String, dynamic>>> _loadSimilarUser() async {
     String userId = Provider.of<UserProvider>(context).id;
     try {
       List<dynamic> users =
@@ -42,14 +43,13 @@ class _CinamatesState extends State<Cinemates> {
         }).toList(),
       );
 
-      setState(() {
-        similarUser = updatedUsers;
-      });
+      return updatedUsers;
     } catch (e) {
       print("Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to load similar users")),
       );
+      return [];
     }
   }
 
@@ -57,14 +57,28 @@ class _CinamatesState extends State<Cinemates> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Cinemates')),
-      body: similarUser.isEmpty
-          ? const Center(
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _similarUserFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return const Center(
+              child: Text(
+                "추천 유저를 불러오는 중 오류가 발생했습니다.",
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
               child: Text(
                 "추천 유저가 없습니다.",
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
-            )
-          : ListView.builder(
+            );
+          } else {
+            final similarUser = snapshot.data!;
+            return ListView.builder(
               itemCount: similarUser.length,
               itemBuilder: (context, index) {
                 final user = similarUser[index];
@@ -147,7 +161,10 @@ class _CinamatesState extends State<Cinemates> {
                   ),
                 );
               },
-            ),
+            );
+          }
+        },
+      ),
     );
   }
 }
