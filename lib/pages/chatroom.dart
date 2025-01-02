@@ -33,7 +33,6 @@ class _ChatRoomState extends State<ChatRoom> {
   final _scrollController = ScrollController();
   late WebSocketChannel _channel;
   final List<Map<String, dynamic>> _sharedMovies = [];
-  String _statusMessage = 'Connecting to server...';
   Uint8List? _user2ProfileImage;
 
   @override
@@ -77,9 +76,6 @@ class _ChatRoomState extends State<ChatRoom> {
     print("channel: ${channel.hashCode}");
 
     if (channel == null) {
-      setState(() {
-        _statusMessage = 'Failed to connect: WebSocket channel is null';
-      });
       return;
     }
 
@@ -376,13 +372,6 @@ class _ChatRoomState extends State<ChatRoom> {
         backgroundColor: const Color.fromARGB(255, 193, 178, 227),
         body: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                _statusMessage,
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            ),
             Expanded(
               child: Consumer<ChatProvider>(
                 builder: (context, chatProvider, child) {
@@ -400,11 +389,6 @@ class _ChatRoomState extends State<ChatRoom> {
                     itemBuilder: (context, index) {
                       final message = messages[index];
                       bool isUser = message['sender'] == widget.user1;
-
-                      // if (message.containsKey('poster_path') &&
-                      //     message.containsKey('movie_id')) {
-                      //   _sharedMovies.add(message);
-                      // }
 
                       return Align(
                         alignment: isUser
