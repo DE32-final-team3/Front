@@ -34,6 +34,10 @@ class UserProvider with ChangeNotifier {
   }
 
   void setUserProfile(Uint8List? profile) {
+    if (_profile != null) {
+      // 기존 프로필 이미지 캐시 제거
+      imageCache.evict(MemoryImage(_profile!));
+    }
     _profile = profile;
     notifyListeners();
   }

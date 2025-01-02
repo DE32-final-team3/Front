@@ -81,8 +81,8 @@ class UserApi {
 
       List<int> movieList = List<int>.from(user['movie_list']);
       userProvider.setMovieList(movieList);
+      chatProvider.connectNotifyChannel(user['id']);
       chatProvider.setChatList(user['id']);
-      chatProvider.connect(user['id']);
 
       // 사용자 영화 리스트 처리
       if (user['movie_list'].isNotEmpty) {

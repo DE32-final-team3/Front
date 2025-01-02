@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:cinetalk/features/chat_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:provider/provider.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/custom_widget.dart';
@@ -31,7 +32,6 @@ class _ChatRoomState extends State<ChatRoom> {
   final _focusNode = FocusNode();
   final _scrollController = ScrollController();
   late WebSocketChannel _channel;
-  final List<Map<String, String>> _messages = [];
   final List<Map<String, dynamic>> _sharedMovies = [];
   String _statusMessage = 'Connecting to server...';
   Uint8List? _user2ProfileImage;
@@ -40,6 +40,11 @@ class _ChatRoomState extends State<ChatRoom> {
   void initState() {
     super.initState();
     _fetchUser2ProfileImage();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _connectWebSocket();
   }
 
@@ -67,77 +72,19 @@ class _ChatRoomState extends State<ChatRoom> {
   }
 
   void _connectWebSocket() {
-    String websocketIP = dotenv.env['CHAT_IP']!;
-    _channel = WebSocketChannel.connect(
-      Uri.parse('wss://$websocketIP/ws/${widget.user1}/${widget.user2}'),
-    );
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    final channel = chatProvider.getChannel(widget.user1, widget.user2);
+    print("channel: ${channel.hashCode}");
 
-    _channel.stream.listen(
-      (message) {
-        try {
-          final decodedMessage = jsonDecode(message);
+    if (channel == null) {
+      setState(() {
+        _statusMessage = 'Failed to connect: WebSocket channel is null';
+      });
+      return;
+    }
 
-          String? formattedTime;
-          if (decodedMessage['timestamp'] != null) {
-            final DateTime parsedTime =
-                DateTime.parse(decodedMessage['timestamp']);
-            final DateTime kstTime = parsedTime.add(const Duration(hours: 9));
-            formattedTime = DateFormat('MM/dd HH:mm').format(kstTime);
-          }
-
-          if (decodedMessage['message'].contains('movie_id') &&
-              decodedMessage['message'].contains('poster_path')) {
-            Map<String, dynamic> movie = jsonDecode(decodedMessage['message']);
-            print(
-                "movie_id ${movie['movie_id']}, poster ${movie['poster_path']}");
-            setState(() {
-              _messages.add({
-                "sender": decodedMessage['sender'],
-                "poster_path": movie['poster_path'],
-                "movie_id": movie['movie_id'].toString(),
-                "timestamp": formattedTime ?? 'Unknown time',
-              });
-
-              _sharedMovies.add({
-                "sender": decodedMessage['sender'],
-                "poster_path": movie['poster_path'],
-                "movie_id": movie["movie_id"].toString(),
-                "timestamp": formattedTime ?? 'Unknown time',
-              });
-            });
-          } else {
-            setState(() {
-              _messages.add({
-                "sender": decodedMessage['sender'],
-                "message": decodedMessage['message'],
-                "timestamp": formattedTime ?? 'Unknown time',
-              });
-            });
-          }
-
-          _scrollToBottom();
-        } catch (_) {}
-      },
-      onDone: () {
-        setState(() {
-          _statusMessage = 'Disconnected from the server';
-        });
-      },
-      onError: (error) {
-        setState(() {
-          _statusMessage = 'Error: $error';
-        });
-      },
-    );
-
+    _channel = channel;
     _scrollToBottom();
-  }
-
-  void _disconnectWebSocket() {
-    setState(() {
-      _statusMessage = 'Disconnected from the server';
-    });
-    _channel.sink.close();
   }
 
   void _sendMessage() {
@@ -148,7 +95,6 @@ class _ChatRoomState extends State<ChatRoom> {
       try {
         _channel.sink.add(message);
         _focusNode.requestFocus();
-        _scrollToBottom();
       } catch (_) {}
     }
   }
@@ -386,22 +332,28 @@ class _ChatRoomState extends State<ChatRoom> {
               ),
               // ListView.builder를 Expanded로 감싸지 않음
               Expanded(
-                child: ListView.builder(
-                  itemCount: _sharedMovies.length,
-                  itemBuilder: (context, index) {
-                    final movie = _sharedMovies[index];
-                    return ListTile(
-                      onTap: () {
-                        CustomWidget.launchMoviePage(movie['movie_id']);
+                child: Consumer<ChatProvider>(
+                  builder: (context, chatProvider, child) {
+                    List<Map<String, dynamic>> sharedMovies =
+                        chatProvider.getMessagesForSharedMovie(widget.user2);
+                    return ListView.builder(
+                      itemCount: sharedMovies.length,
+                      itemBuilder: (context, index) {
+                        final movie = sharedMovies[index];
+                        return ListTile(
+                          onTap: () {
+                            CustomWidget.launchMoviePage(movie['movie_id']);
+                          },
+                          title: Image.network(
+                            movie['poster_path']!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Text('Image not available');
+                            },
+                          ),
+                          subtitle: Text(movie['timestamp'] ?? 'Unknown'),
+                        );
                       },
-                      title: Image.network(
-                        movie['poster_path']!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Text('Image not available');
-                        },
-                      ),
-                      subtitle: Text(movie['timestamp'] ?? 'Unknown'),
                     );
                   },
                 ),
@@ -432,89 +384,107 @@ class _ChatRoomState extends State<ChatRoom> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  bool isUser = message['sender'] == widget.user1;
+              child: Consumer<ChatProvider>(
+                builder: (context, chatProvider, child) {
+                  List<Map<String, dynamic>> messages =
+                      chatProvider.getMessagesForChatRoom(widget.user2);
 
-                  return Align(
-                    alignment:
-                        isUser ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (!isUser && _user2ProfileImage != null) ...[
-                            GestureDetector(
-                              onTap: () => CustomWidget.showUserProfile(
-                                  widget.user2, context),
-                              child: CircleAvatar(
-                                backgroundImage:
-                                    MemoryImage(_user2ProfileImage!),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                          Column(
-                            crossAxisAlignment: isUser
-                                ? CrossAxisAlignment.end
-                                : CrossAxisAlignment.start,
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (_scrollController.hasClients) {
+                      _scrollToBottom();
+                    }
+                  });
+                  return ListView.builder(
+                    controller: _scrollController,
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final message = messages[index];
+                      bool isUser = message['sender'] == widget.user1;
+
+                      // if (message.containsKey('poster_path') &&
+                      //     message.containsKey('movie_id')) {
+                      //   _sharedMovies.add(message);
+                      // }
+
+                      return Align(
+                        alignment: isUser
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: isUser
-                                      ? Colors.blue
-                                      : const Color.fromARGB(
-                                          255, 255, 255, 255),
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                padding: const EdgeInsets.all(10),
-                                child: message.containsKey('poster_path') &&
-                                        message.containsKey('movie_id')
-                                    ? GestureDetector(
-                                        onTap: () {
-                                          // 클릭 이벤트 처리
-                                          CustomWidget.launchMoviePage(
-                                              message['movie_id']);
-                                        },
-                                        child: Image.network(
-                                          message['poster_path']!,
-                                          width: 120,
-                                          height: 200,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            return const Text(
-                                                'Image not available');
-                                          },
-                                        ),
-                                      )
-                                    : Text(
-                                        message['message']!,
-                                        style: TextStyle(
-                                          color: isUser
-                                              ? Colors.white
-                                              : Colors.black,
-                                        ),
-                                      ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
-                                child: Text(
-                                  message['timestamp'] ?? 'Unknown',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.black,
+                              if (!isUser && _user2ProfileImage != null) ...[
+                                GestureDetector(
+                                  onTap: () => CustomWidget.showUserProfile(
+                                      widget.user2, context),
+                                  child: CircleAvatar(
+                                    backgroundImage:
+                                        MemoryImage(_user2ProfileImage!),
                                   ),
                                 ),
+                                const SizedBox(width: 8),
+                              ],
+                              Column(
+                                crossAxisAlignment: isUser
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: isUser
+                                          ? Colors.blue
+                                          : const Color.fromARGB(
+                                              255, 255, 255, 255),
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    padding: const EdgeInsets.all(10),
+                                    child: message.containsKey('poster_path') &&
+                                            message.containsKey('movie_id')
+                                        ? GestureDetector(
+                                            onTap: () {
+                                              // 클릭 이벤트 처리
+                                              CustomWidget.launchMoviePage(
+                                                  message['movie_id']);
+                                            },
+                                            child: Image.network(
+                                              message['poster_path']!,
+                                              width: 120,
+                                              height: 200,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                return const Text(
+                                                    'Image not available');
+                                              },
+                                            ),
+                                          )
+                                        : Text(
+                                            message['message']!,
+                                            style: TextStyle(
+                                              color: isUser
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                            ),
+                                          ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text(
+                                      message['timestamp'] ?? 'Unknown',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
