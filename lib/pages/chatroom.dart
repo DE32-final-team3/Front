@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:cinetalk/features/chat_provider.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:provider/provider.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 // features
 import 'package:cinetalk/features/api.dart';
+import 'package:cinetalk/features/chat_provider.dart';
 import 'package:cinetalk/features/custom_widget.dart';
 
 class ChatRoom extends StatefulWidget {
@@ -32,7 +31,6 @@ class _ChatRoomState extends State<ChatRoom> {
   final _focusNode = FocusNode();
   final _scrollController = ScrollController();
   late WebSocketChannel _channel;
-  final List<Map<String, dynamic>> _sharedMovies = [];
   String _statusMessage = 'Connecting to server...';
   Uint8List? _user2ProfileImage;
 
@@ -401,11 +399,6 @@ class _ChatRoomState extends State<ChatRoom> {
                       final message = messages[index];
                       bool isUser = message['sender'] == widget.user1;
 
-                      // if (message.containsKey('poster_path') &&
-                      //     message.containsKey('movie_id')) {
-                      //   _sharedMovies.add(message);
-                      // }
-
                       return Align(
                         alignment: isUser
                             ? Alignment.centerRight
@@ -459,12 +452,19 @@ class _ChatRoomState extends State<ChatRoom> {
                                               },
                                             ),
                                           )
-                                        : Text(
-                                            message['message']!,
-                                            style: TextStyle(
-                                              color: isUser
-                                                  ? Colors.white
-                                                  : Colors.black,
+                                        : Container(
+                                            constraints: BoxConstraints(
+                                                maxWidth:
+                                                    280), // 텍스트가 넘어갈 수 있는 최대 너비 설정
+                                            child: Text(
+                                              message['message']!,
+                                              style: TextStyle(
+                                                color: isUser
+                                                    ? Colors.white
+                                                    : Colors.black,
+                                              ),
+                                              softWrap: true,
+                                              overflow: TextOverflow.visible,
                                             ),
                                           ),
                                   ),
