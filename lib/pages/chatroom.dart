@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cinetalk/features/chat_provider.dart';
-import 'package:intl/intl.dart';
-import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/custom_widget.dart';
@@ -369,7 +368,7 @@ class _ChatRoomState extends State<ChatRoom> {
             ],
           ),
         ),
-        backgroundColor: const Color.fromARGB(255, 193, 178, 227),
+        backgroundColor: Color(0xFFD9EAFD),
         body: Column(
           children: [
             Expanded(

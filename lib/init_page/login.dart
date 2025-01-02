@@ -49,8 +49,6 @@ class _LoginState extends State<Login> {
       final email = _emailController.text;
       final password = _passwordController.text;
 
-      //CustomWidget.showLoadingDialog(context);
-
       try {
         var response = await UserApi.login(email, password);
         if (response) {
@@ -80,7 +78,7 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login'),
+        title: const Text('로그인'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -89,6 +87,12 @@ class _LoginState extends State<Login> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              Image.asset(
+                'assets/logo.png', // 로고 파일 경로
+                height: 200, // 원하는 높이
+                fit: BoxFit.contain, // 이미지 비율 유지
+              ),
+              const SizedBox(height: 50.0),
               TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(

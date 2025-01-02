@@ -7,29 +7,6 @@ import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/user_provider.dart';
 
 class CustomWidget {
-  static void showLoadingDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false, // 다이얼로그 외부를 터치해도 닫히지 않도록 설정
-      builder: (BuildContext context) {
-        return Center(
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   static Future<void> launchMoviePage(String? movieId) async {
     Uri url = Uri.parse('https://www.themoviedb.org/movie/$movieId');
     if (await canLaunchUrl(url)) {

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:cinetalk/init_page/login.dart';
 // features
 import 'package:cinetalk/features/api.dart';
-import 'package:cinetalk/features/custom_widget.dart';
 
 class FindPassword extends StatefulWidget {
   const FindPassword({super.key});
@@ -34,7 +33,26 @@ class _FindPasswordState extends State<FindPassword> {
       return;
     }
 
-    CustomWidget.showLoadingDialog(context);
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 다이얼로그 외부를 터치해도 닫히지 않도록 설정
+      builder: (BuildContext context) {
+        return Center(
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        );
+      },
+    );
 
     try {
       String email = _emailController.text;
@@ -97,7 +115,7 @@ class _FindPasswordState extends State<FindPassword> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Find Password')),
+      appBar: AppBar(title: const Text('비밀번호 찾기')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(

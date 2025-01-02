@@ -52,15 +52,28 @@ class _SignUpState extends State<SignUp> {
       return;
     }
 
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 다이얼로그 밖을 클릭해도 닫히지 않도록 설정
+      builder: (BuildContext context) {
+        return Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+
     // API 호출 코드
     var statusCode =
         await UserApi.postParameters("/user/check/email", {"email": email});
-    _showVerificationDialog();
+
+    // 로딩 다이얼로그 숨기기
+    Navigator.of(context).pop();
+
     if (statusCode == 200) {
       setState(() {
         _isEmailChecked = true;
       });
-      _showAlertDialog(context, '사용 가능한 이메일입니다, 인증 코드를 확인해주세요.');
+      _showVerificationDialog();
     } else {
       setState(() {
         _isEmailChecked = false;

@@ -88,7 +88,6 @@ class _SearchMovieState extends State<SearchMovie> {
       // 포맷된 영화 추가
       formattedMovies.add(formatMovie);
     }
-
     return formattedMovies; // 포맷된 영화 리스트 반환
   }
 
@@ -98,7 +97,7 @@ class _SearchMovieState extends State<SearchMovie> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('큐레이터 생성'),
+        title: const Text('영화 리스트 생성하기'),
       ),
       body: Stack(
         children: [
@@ -128,7 +127,7 @@ class _SearchMovieState extends State<SearchMovie> {
               const SizedBox(width: 12.0),
               Expanded(
                 child: Container(
-                  color: Colors.grey[200],
+                  color: Color(0xFFD9EAFD),
                   child: searchedMovies.isEmpty
                       ? const Center(
                           child: Text(
@@ -151,7 +150,7 @@ class _SearchMovieState extends State<SearchMovie> {
                                 child: Container(
                                   color: isSelected
                                       ? Colors.blueAccent.withOpacity(0.2)
-                                      : Colors.white,
+                                      : Color(0xFFD9EAFD),
                                   child: CustomWidget.searchCard(movie),
                                 ),
                               ),

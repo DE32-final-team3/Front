@@ -62,6 +62,7 @@ class _MyPageState extends State<MyPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 5),
             Align(
               alignment: Alignment.topRight,
               child: IconButton(
@@ -147,13 +148,14 @@ class _MyPageState extends State<MyPage> {
                               var user = followingDetails[index];
 
                               return Card(
+                                color: Color.fromARGB(255, 163, 206, 254),
                                 elevation: 2,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(
-                                      4.0), // Card 내부 공백 설정
+                                      6.0), // Card 내부 공백 설정
                                   child: ListTile(
                                     leading: CircleAvatar(
                                       backgroundImage: user['profile'] != null

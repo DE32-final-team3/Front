@@ -196,23 +196,6 @@ class ChatProvider with ChangeNotifier {
     }
   }
 
-  // WebSocket 연결을 시작하는 기존 메서드 (변경 없음)
-  // void connect(String userId) {
-  //   String websocketIP = dotenv.env['CHAT_IP']!;
-  //   _channel = WebSocketChannel.connect(
-  //     Uri.parse('wss://$websocketIP/ws/$userId'),
-  //   );
-  //   print("Connected to notify channel");
-
-  //   _channel.stream.listen((message) {
-  //     print("listen");
-  //     _messages.add(message); // 메시지를 저장
-  //     setChatList(userId);
-
-  //     notifyListeners(); // 메시지가 변경되면 UI 업데이트
-  //   });
-  // }
-
   void connectNotifyChannel(String userId) {
     if (_isConnected['notify'] != true) {
       String websocketIP = dotenv.env['CHAT_IP']!;

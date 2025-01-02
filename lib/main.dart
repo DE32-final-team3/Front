@@ -8,8 +8,8 @@ import 'package:cinetalk/init_page/page_list.dart';
 import 'package:cinetalk/features/user_provider.dart';
 import 'package:cinetalk/features/movie_provider.dart';
 import 'package:cinetalk/features/chat_provider.dart';
-import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/auth.dart';
+import 'package:cinetalk/features/api.dart';
 
 void main() async {
   await dotenv.load();
@@ -30,7 +30,25 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primarySwatch: Colors.blue,
+          scaffoldBackgroundColor: Colors.white,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.blueAccent, // AppBar 배경 색상
+            foregroundColor: Colors.white, // AppBar 텍스트/아이콘 색상
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent, // 버튼 색상
+              foregroundColor: Colors.white, // 버튼 텍스트 색상
+            ),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.blue, // TextButton 텍스트 색상
+            ),
+          ),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            backgroundColor: Colors.blue, // FloatingActionButton 색상
+          ),
         ),
         home: const SplashScreen(),
       ),
@@ -75,16 +93,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.blueAccent,
+    return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
-        child: Text(
-          'CINEMATE',
-          style: TextStyle(
-            fontSize: 48,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+        child: Image.asset(
+          'assets/logo.gif',
+          width: 500,
+          height: 500,
+          fit: BoxFit.contain,
         ),
       ),
     );

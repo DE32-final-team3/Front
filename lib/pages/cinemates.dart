@@ -82,21 +82,6 @@ class _CinamatesState extends State<Cinemates> {
               itemCount: similarUser.length,
               itemBuilder: (context, index) {
                 final user = similarUser[index];
-
-                // 조건부로 배경색 설정
-                Color? backgroundColor;
-                if (index == 0) {
-                  backgroundColor =
-                      const Color.fromARGB(255, 197, 179, 88); // 금색
-                } else if (index == 1) {
-                  backgroundColor = const Color.fromARGB(255, 192, 192, 192);
-                } else if (index == 2) {
-                  backgroundColor =
-                      const Color.fromARGB(255, 205, 127, 50); // 동색
-                } else {
-                  backgroundColor = Colors.grey[300]; // 기본 흰색
-                }
-
                 return GestureDetector(
                   onTap: () =>
                       CustomWidget.showUserProfile(user['user_id'], context),
@@ -108,7 +93,7 @@ class _CinamatesState extends State<Cinemates> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      color: backgroundColor, // Card의 배경색 설정
+                      color: Colors.grey[50], // Card의 배경색 설정
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
@@ -116,9 +101,7 @@ class _CinamatesState extends State<Cinemates> {
                             CircleAvatar(
                               backgroundImage: user['profileImage'] != null
                                   ? MemoryImage(user['profileImage']!)
-                                  : const AssetImage(
-                                          'assets/default_profile.png')
-                                      as ImageProvider,
+                                  : const Icon(Icons.person) as ImageProvider,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -145,7 +128,6 @@ class _CinamatesState extends State<Cinemates> {
                                   ),
                                 );
                               },
-                              child: const Text('채팅하기'),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 10),
@@ -153,6 +135,7 @@ class _CinamatesState extends State<Cinemates> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
+                              child: const Text('채팅하기'),
                             ),
                           ],
                         ),
