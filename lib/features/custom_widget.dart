@@ -193,8 +193,7 @@ class CustomWidget {
       // Fetch user info and movies
       final response = await UserApi.getFollowInfo(userId);
 
-      if (response == null ||
-          !response.containsKey('movie_list') ||
+      if (!response.containsKey('movie_list') ||
           !response.containsKey('nickname')) {
         throw Exception("Failed to fetch user info.");
       }
@@ -211,44 +210,27 @@ class CustomWidget {
         movies = await MovieApi.fetchMovies(movieIds.cast<int>()) ?? [];
       }
 
-      // Display the unified profile dialog
-      profileDialog({
+      Map<String, dynamic> user = {
         "id": userId,
         "nickname": nickname,
         "profile": profileImage,
-      }, context, movies);
-    } catch (e) {
-      print("Error fetching profile for user $userId: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to fetch profile for user $userId")),
-      );
-    }
-  }
+      };
 
-  static Future<void> profileDialog(
-    Map<String, dynamic> user,
-    BuildContext context,
-    List<Map<String, dynamic>> movies,
-  ) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final crossAxisCount = (screenWidth / 150).floor();
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
 
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+      showDialog(
+          context: context,
+          builder: (context) {
+            final isFollowing = userProvider.following.contains(user['id']);
+
+            return AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Consumer<UserProvider>(
-                    builder: (context, provider, child) {
-                      final isFollowing =
-                          provider.following.contains(user['id']);
-                      return IconButton(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
                         icon: Icon(
                           isFollowing ? Icons.favorite : Icons.favorite_outline,
                           color: Colors.red,
@@ -259,93 +241,97 @@ class CustomWidget {
                             await UserApi.unfollow(
                               "/user/follow/delete",
                               {
-                                "id": provider.id,
+                                "id": userProvider.id,
                                 "following_id": user['id'],
                               },
                             );
-                            provider.unfollow(user['id']);
+                            userProvider.unfollow(user['id']);
                           } else {
                             await UserApi.postParameters(
                               "/user/follow",
                               {
-                                "id": provider.id,
+                                "id": userProvider.id,
                                 "following_id": user['id'],
                               },
                             );
-                            provider.follow(user['id']);
+                            userProvider.follow(user['id']);
                           }
                         },
-                      );
-                    },
+                      )
+                    ],
                   ),
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: user['profile'] != null
+                        ? MemoryImage(user['profile'])
+                        : null,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    user['nickname'],
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  if (movies.isNotEmpty)
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      width: MediaQuery.of(context).size.width * 0.6,
+                      child: GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount:
+                              (MediaQuery.of(context).size.width / 150).floor(),
+                          crossAxisSpacing: 8.0,
+                          mainAxisSpacing: 8.0,
+                          childAspectRatio: 0.7,
+                        ),
+                        itemCount: movies.length,
+                        itemBuilder: (context, index) {
+                          final movie = movies[index];
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                Uri url = Uri.parse(
+                                    'https://www.themoviedb.org/movie/${movie['movie_id']}');
+                                launchUrl(url);
+                              },
+                              child: movie['poster_path'] != null
+                                  ? Image.network(
+                                      'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
+                                      width: 100,
+                                      height: 150,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const Icon(
+                                      Icons.movie,
+                                      size: 100,
+                                      color: Colors.grey,
+                                    ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    const Text("No movies found."),
                 ],
               ),
-              CircleAvatar(
-                radius: 40,
-                backgroundImage: user['profile'] != null
-                    ? MemoryImage(user['profile'])
-                    : null,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                user['nickname'],
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Close"),
                 ),
-              ),
-              const SizedBox(height: 20),
-              if (movies.isNotEmpty)
-                SizedBox(
-                  height: screenHeight * 0.4,
-                  width: screenWidth * 0.6,
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 8.0,
-                      mainAxisSpacing: 8.0,
-                      childAspectRatio: 0.7,
-                    ),
-                    itemCount: movies.length,
-                    itemBuilder: (context, index) {
-                      final movie = movies[index];
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: GestureDetector(
-                          onTap: () {
-                            Uri url = Uri.parse(
-                                'https://www.themoviedb.org/movie/${movie['movie_id']}');
-                            launchUrl(url);
-                          },
-                          child: movie['poster_path'] != null
-                              ? Image.network(
-                                  'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-                                  width: 100,
-                                  height: 150,
-                                  fit: BoxFit.cover,
-                                )
-                              : const Icon(
-                                  Icons.movie,
-                                  size: 100,
-                                  color: Colors.grey,
-                                ),
-                        ),
-                      );
-                    },
-                  ),
-                )
-              else
-                const Text("No movies found."),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
-            ),
-          ],
-        );
-      },
-    );
+              ],
+            );
+          });
+    } catch (e) {
+      print("Error fetching profile for user $userId: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to fetch profile for user $userId")),
+      );
+    }
   }
 }
