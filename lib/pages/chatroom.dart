@@ -442,12 +442,19 @@ class _ChatRoomState extends State<ChatRoom> {
                                               },
                                             ),
                                           )
-                                        : Text(
-                                            message['message']!,
-                                            style: TextStyle(
-                                              color: isUser
-                                                  ? Colors.white
-                                                  : Colors.black,
+                                        : Container(
+                                            constraints: BoxConstraints(
+                                                maxWidth:
+                                                    280), // 텍스트가 넘어갈 수 있는 최대 너비 설정
+                                            child: Text(
+                                              message['message']!,
+                                              style: TextStyle(
+                                                color: isUser
+                                                    ? Colors.white
+                                                    : Colors.black,
+                                              ),
+                                              softWrap: true,
+                                              overflow: TextOverflow.visible,
                                             ),
                                           ),
                                   ),

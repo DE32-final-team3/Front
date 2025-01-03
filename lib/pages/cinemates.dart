@@ -98,12 +98,34 @@ class _CinamatesState extends State<Cinemates> {
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
                           children: [
+                            SizedBox.square(
+                              dimension: 50,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Color(0xFFD9EAFD),
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blueGrey),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16.0),
                             CircleAvatar(
                               backgroundImage: user['profileImage'] != null
                                   ? MemoryImage(user['profileImage']!)
                                   : const Icon(Icons.person) as ImageProvider,
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 16.0),
                             Expanded(
                               child: Text(
                                 user['nickname'],

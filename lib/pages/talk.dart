@@ -20,6 +20,7 @@ class _TalkState extends State<Talk> {
   @override
   void initState() {
     super.initState();
+    _isLoading = true;
     _loadChatList();
   }
 
@@ -72,6 +73,7 @@ class _TalkState extends State<Talk> {
                               final chat = chatProvider.chatList[index];
                               return GestureDetector(
                                 onTap: () async {
+                                  _isLoading = true;
                                   final userId = Provider.of<UserProvider>(
                                           context,
                                           listen: false)
