@@ -170,9 +170,12 @@ class _SearchMovieState extends State<SearchMovie> {
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
+                      backgroundColor: Color(0xFFD9EAFD),
                       title: const Text('선택한 영화 목록'),
                       content: SizedBox(
-                        width: double.maxFinite, // Dialog의 내용이 꽉 차도록 설정
+                        width: MediaQuery.of(context).size.width <= 500
+                            ? double.maxFinite
+                            : 500, // Dialog의 내용이 조건에 따라 꽉 차도록 설정
                         child: StatefulBuilder(
                           builder: (context, setState) {
                             return ListView.builder(

@@ -39,7 +39,7 @@ class _CuratorState extends State<Curator> {
 
           return ListView.builder(
             itemCount: movieList.length,
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(4.0),
             itemBuilder: (context, index) {
               var movie = movieList[index];
               return Padding(

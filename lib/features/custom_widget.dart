@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/user_provider.dart';
+// pages
+import 'package:cinetalk/pages/chatroom.dart';
 
 class CustomWidget {
   static Future<void> launchMoviePage(String? movieId) async {
@@ -18,6 +20,7 @@ class CustomWidget {
 
   static Widget movieCard(var movie) {
     return Card(
+      color: Color.fromARGB(255, 231, 241, 253),
       elevation: 4.0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),
@@ -60,6 +63,7 @@ class CustomWidget {
 
   static Widget searchCard(var movie) {
     return Card(
+      color: Color.fromARGB(255, 231, 241, 253),
       elevation: 4.0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.0),
@@ -87,7 +91,6 @@ class CustomWidget {
                   )
                 : const Icon(Icons.movie, size: 70, color: Colors.grey),
             const SizedBox(width: 12.0),
-
             // 텍스트 정보
             Expanded(
               child: Column(
@@ -149,6 +152,7 @@ class CustomWidget {
 
   static Widget selectCard(var movie) {
     return Card(
+      color: Color.fromARGB(255, 165, 207, 255),
       elevation: 4.0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),
@@ -217,107 +221,120 @@ class CustomWidget {
       };
 
       final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final isFollowingNotifier = ValueNotifier<bool>(
+        userProvider.following.contains(user['id']),
+      );
 
       showDialog(
           context: context,
           builder: (context) {
-            final isFollowing = userProvider.following.contains(user['id']);
-
             return AlertDialog(
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+              backgroundColor: Colors.grey[50],
+              content: ValueListenableBuilder<bool>(
+                valueListenable: isFollowingNotifier,
+                builder: (context, isFollowing, child) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        icon: Icon(
-                          isFollowing ? Icons.favorite : Icons.favorite_outline,
-                          color: Colors.red,
-                          size: 30,
-                        ),
-                        onPressed: () async {
-                          if (isFollowing) {
-                            await UserApi.unfollow(
-                              "/user/follow/delete",
-                              {
-                                "id": userProvider.id,
-                                "following_id": user['id'],
-                              },
-                            );
-                            userProvider.unfollow(user['id']);
-                          } else {
-                            await UserApi.postParameters(
-                              "/user/follow",
-                              {
-                                "id": userProvider.id,
-                                "following_id": user['id'],
-                              },
-                            );
-                            userProvider.follow(user['id']);
-                          }
-                        },
-                      )
-                    ],
-                  ),
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundImage: user['profile'] != null
-                        ? MemoryImage(user['profile'])
-                        : null,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    user['nickname'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  if (movies.isNotEmpty)
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.4,
-                      width: MediaQuery.of(context).size.width * 0.6,
-                      child: GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount:
-                              (MediaQuery.of(context).size.width / 150).floor(),
-                          crossAxisSpacing: 8.0,
-                          mainAxisSpacing: 8.0,
-                          childAspectRatio: 0.7,
-                        ),
-                        itemCount: movies.length,
-                        itemBuilder: (context, index) {
-                          final movie = movies[index];
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0),
-                            child: GestureDetector(
-                              onTap: () {
-                                Uri url = Uri.parse(
-                                    'https://www.themoviedb.org/movie/${movie['movie_id']}');
-                                launchUrl(url);
-                              },
-                              child: movie['poster_path'] != null
-                                  ? Image.network(
-                                      'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-                                      width: 100,
-                                      height: 150,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : const Icon(
-                                      Icons.movie,
-                                      size: 100,
-                                      color: Colors.grey,
-                                    ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              isFollowing
+                                  ? Icons.favorite
+                                  : Icons.favorite_outline,
+                              color: Colors.red,
+                              size: 30,
                             ),
-                          );
-                        },
+                            onPressed: () async {
+                              if (isFollowing) {
+                                await UserApi.unfollow(
+                                  "/user/follow/delete",
+                                  {
+                                    "id": userProvider.id,
+                                    "following_id": user['id'],
+                                  },
+                                );
+                                userProvider.unfollow(user['id']);
+                                isFollowingNotifier.value = false;
+                              } else {
+                                await UserApi.postParameters(
+                                  "/user/follow",
+                                  {
+                                    "id": userProvider.id,
+                                    "following_id": user['id'],
+                                  },
+                                );
+                                userProvider.follow(user['id']);
+                                isFollowingNotifier.value = true;
+                              }
+                            },
+                          )
+                        ],
                       ),
-                    )
-                  else
-                    const Text("No movies found."),
-                ],
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundImage: user['profile'] != null
+                            ? MemoryImage(user['profile'])
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        user['nickname'],
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (movies.isNotEmpty)
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.4,
+                          width: MediaQuery.of(context).size.width * 0.6,
+                          child: GridView.builder(
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount:
+                                  (MediaQuery.of(context).size.width / 150)
+                                      .floor(),
+                              crossAxisSpacing: 8.0,
+                              mainAxisSpacing: 8.0,
+                              childAspectRatio: 0.7,
+                            ),
+                            itemCount: movies.length,
+                            itemBuilder: (context, index) {
+                              final movie = movies[index];
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Uri url = Uri.parse(
+                                        'https://www.themoviedb.org/movie/${movie['movie_id']}');
+                                    launchUrl(url);
+                                  },
+                                  child: movie['poster_path'] != null
+                                      ? Image.network(
+                                          'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
+                                          width: 100,
+                                          height: 150,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : const Icon(
+                                          Icons.movie,
+                                          size: 100,
+                                          color: Colors.grey,
+                                        ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      else
+                        const Text("No movies found."),
+                    ],
+                  );
+                },
               ),
               actions: [
                 TextButton(
@@ -333,5 +350,29 @@ class CustomWidget {
         SnackBar(content: Text("Failed to fetch profile for user $userId")),
       );
     }
+  }
+
+  static Widget chatButton(BuildContext context, final user) {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatRoom(
+              user1: Provider.of<UserProvider>(context, listen: false).id,
+              user2: user['id'],
+              user2Nickname: user['nickname'],
+            ),
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: const Text('채팅하기'),
+    );
   }
 }

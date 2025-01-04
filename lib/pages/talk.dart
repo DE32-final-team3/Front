@@ -127,19 +127,26 @@ class ChatBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 5.0, // 그림자 설정
       margin: const EdgeInsets.symmetric(vertical: 5),
       child: ListTile(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        tileColor: Colors.white,
         leading: CircleAvatar(
+          radius: 25,
           backgroundImage: profileImage.isNotEmpty
               ? MemoryImage(profileImage)
               : const AssetImage('assets/default_profile.png') as ImageProvider,
         ),
         title: Text(
           nickname,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        subtitle:
-            Text(lastMessage.contains('poster_path') ? '[영화 공유]' : lastMessage),
+        subtitle: Text(
+            lastMessage.contains('poster_path') ? '[영화 공유]' : lastMessage,
+            style: const TextStyle(fontSize: 14)),
         trailing: unreadCount > 0
             ? CircleAvatar(
                 radius: 12,

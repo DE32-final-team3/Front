@@ -34,7 +34,6 @@ class ChatProvider with ChangeNotifier {
 
   void addChannel(String userId) {
     _userIds.add(userId);
-    print("adds userIds : $_userIds");
     if (!_chatMessages.containsKey(userId)) {
       _chatMessages[userId] = [];
     } // 채팅방 메시지 초기화
@@ -140,7 +139,6 @@ class ChatProvider with ChangeNotifier {
       // 채널이 아직 연결되지 않은 경우에만 연결
       if (_isConnected[receiver] != true) {
         try {
-          print("$sender, $receiver");
           _channels[receiver] = WebSocketChannel.connect(
             Uri.parse('wss://$websocketIP/ws/$sender/$receiver'),
           );
@@ -206,13 +204,10 @@ class ChatProvider with ChangeNotifier {
       print("Connected to notify channel");
 
       _notiChannel.stream.listen((message) {
-        print("Message received: $message");
         _messages.add(message);
         setChatList(userId);
         notifyListeners();
       });
-    } else {
-      print("Notify channel already connected");
     }
   }
 
@@ -222,6 +217,5 @@ class ChatProvider with ChangeNotifier {
     _channels.forEach((key, value) {
       value.sink.close();
     });
-    print("disconnect");
   }
 }

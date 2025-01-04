@@ -2,8 +2,6 @@ import 'dart:typed_data';
 import 'package:cinetalk/features/custom_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
-// pages
-import 'package:cinetalk/pages/chatroom.dart';
 // features
 import 'package:cinetalk/features/api.dart';
 import 'package:cinetalk/features/user_provider.dart';
@@ -19,24 +17,24 @@ class _CinamatesState extends State<Cinemates> {
   late Future<List<Map<String, dynamic>>> _similarUserFuture;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _similarUserFuture =
-        _loadSimilarUser(); // Fetch users when dependencies change
+  void initState() {
+    super.initState();
+    _similarUserFuture = _loadSimilarUser(); // 데이터 로드 작업을 initState에서 처리
   }
 
   Future<List<Map<String, dynamic>>> _loadSimilarUser() async {
-    String userId = Provider.of<UserProvider>(context).id;
+    String userId = Provider.of<UserProvider>(context, listen: false).id;
+    // listen: false로 변경하여 rebuild 방지
     try {
       List<dynamic> users =
           await UserApi.getParameters("/similarity/details", "index", userId);
 
-      // Add profile images to the user list
+      // 프로필 이미지를 추가한 유저 리스트 생성
       List<Map<String, dynamic>> updatedUsers = await Future.wait(
         users.map((user) async {
           Uint8List? profileImage = await UserApi.getProfile(user['user_id']);
           return {
-            "user_id": user['user_id'],
+            "id": user['user_id'],
             "nickname": user['nickname'],
             "profileImage": profileImage,
           };
@@ -79,12 +77,13 @@ class _CinamatesState extends State<Cinemates> {
           } else {
             final similarUser = snapshot.data!;
             return ListView.builder(
+              padding: const EdgeInsets.all(4.0),
               itemCount: similarUser.length,
               itemBuilder: (context, index) {
                 final user = similarUser[index];
                 return GestureDetector(
                   onTap: () =>
-                      CustomWidget.showUserProfile(user['user_id'], context),
+                      CustomWidget.showUserProfile(user['id'], context),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8.0, vertical: 4.0),
@@ -121,6 +120,7 @@ class _CinamatesState extends State<Cinemates> {
                             ),
                             const SizedBox(width: 16.0),
                             CircleAvatar(
+                              radius: 25,
                               backgroundImage: user['profileImage'] != null
                                   ? MemoryImage(user['profileImage']!)
                                   : const Icon(Icons.person) as ImageProvider,
@@ -135,30 +135,7 @@ class _CinamatesState extends State<Cinemates> {
                                 ),
                               ),
                             ),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ChatRoom(
-                                      user1: Provider.of<UserProvider>(context,
-                                              listen: false)
-                                          .id,
-                                      user2: user['user_id'],
-                                      user2Nickname: user['nickname'],
-                                    ),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text('채팅하기'),
-                            ),
+                            CustomWidget.chatButton(context, user),
                           ],
                         ),
                       ),

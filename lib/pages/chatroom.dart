@@ -31,7 +31,6 @@ class _ChatRoomState extends State<ChatRoom> {
   final _focusNode = FocusNode();
   final _scrollController = ScrollController();
   late WebSocketChannel _channel;
-  final List<Map<String, dynamic>> _sharedMovies = [];
   Uint8List? _user2ProfileImage;
 
   @override
@@ -72,7 +71,6 @@ class _ChatRoomState extends State<ChatRoom> {
   void _connectWebSocket() {
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
     final channel = chatProvider.getChannel(widget.user1, widget.user2);
-    print("channel: ${channel.hashCode}");
 
     if (channel == null) {
       return;
@@ -155,6 +153,7 @@ class _ChatRoomState extends State<ChatRoom> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return Dialog(
+              backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.0), // 모서리 둥글게
               ),
@@ -200,7 +199,7 @@ class _ChatRoomState extends State<ChatRoom> {
                     const SizedBox(height: 16.0),
                     Expanded(
                       child: Container(
-                        color: Colors.grey[200],
+                        color: Colors.white,
                         child: searchedMovies.isEmpty
                             ? const Center(
                                 child: Text(
@@ -272,6 +271,8 @@ class _ChatRoomState extends State<ChatRoom> {
     return PopScope(
       onPopInvokedWithResult: (didPop, result) async {
         await _updateOffset();
+        Provider.of<ChatProvider>(context, listen: false)
+            .setChatList(widget.user1);
       },
       child: Scaffold(
         appBar: AppBar(
@@ -284,13 +285,6 @@ class _ChatRoomState extends State<ChatRoom> {
             ),
           ),
           centerTitle: true, // AppBar 제목을 가운데 정렬
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () async {
-              await _updateOffset();
-              Navigator.of(context).pop(true);
-            },
-          ),
           actions: [
             Builder(
               builder: (BuildContext context) {
@@ -306,26 +300,28 @@ class _ChatRoomState extends State<ChatRoom> {
           ],
         ),
         endDrawer: Drawer(
+          backgroundColor: Colors.white,
           child: Column(
             children: [
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                ),
-                child: Container(
-                  alignment: Alignment.center,
-                  height: 100, // 세로 길이 지정
-                  child: Text(
-                    '공유 영화 목록',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+              SizedBox(
+                height: 100,
+                child: DrawerHeader(
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                  ),
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: Text(
+                      '공유 영화 목록',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-              // ListView.builder를 Expanded로 감싸지 않음
               Expanded(
                 child: Consumer<ChatProvider>(
                   builder: (context, chatProvider, child) {
@@ -335,18 +331,27 @@ class _ChatRoomState extends State<ChatRoom> {
                       itemCount: sharedMovies.length,
                       itemBuilder: (context, index) {
                         final movie = sharedMovies[index];
-                        return ListTile(
+                        return GestureDetector(
                           onTap: () {
                             CustomWidget.launchMoviePage(movie['movie_id']);
                           },
-                          title: Image.network(
-                            movie['poster_path']!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Text('Image not available');
-                            },
+                          child: Container(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min, // 내용물 크기에 맞게 조정
+                              children: [
+                                Image.network(
+                                  movie['poster_path'],
+                                  width: 160,
+                                  height: 240,
+                                ),
+                                const SizedBox(height: 4.0), // 위젯 간 여백 추가
+                                Text(
+                                  movie['timestamp'] ?? 'Unknown',
+                                ),
+                              ],
+                            ),
                           ),
-                          subtitle: Text(movie['timestamp'] ?? 'Unknown'),
                         );
                       },
                     );

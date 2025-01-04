@@ -142,35 +142,52 @@ class _MyPageState extends State<MyPage> {
                         } else {
                           List<Map<String, dynamic>> followingDetails =
                               snapshot.data!;
-                          return ListView.builder(
+                          return ListView.separated(
                             itemCount: followingDetails.length,
                             itemBuilder: (context, index) {
                               var user = followingDetails[index];
 
-                              return Card(
-                                color: Color.fromARGB(255, 163, 206, 254),
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(
-                                      6.0), // Card 내부 공백 설정
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundImage: user['profile'] != null
-                                          ? MemoryImage(user['profile'])
-                                          : null,
-                                      child: user['profile'] == null
-                                          ? const Icon(Icons.person)
-                                          : null,
-                                    ),
-                                    title: Text(user['nickname']),
-                                    onTap: () => CustomWidget.showUserProfile(
-                                        user['id'], context),
+                              return GestureDetector(
+                                onTap: () => CustomWidget.showUserProfile(
+                                    user['id'], context),
+                                child: Card(
+                                  color: Color.fromARGB(255, 163, 206, 254),
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12.0,
+                                        horizontal: 20.0), // Card 내부 공백 설정
+                                    child: Row(children: [
+                                      CircleAvatar(
+                                        radius: 25,
+                                        backgroundImage: user['profile'] != null
+                                            ? MemoryImage(user['profile'])
+                                            : null,
+                                        child: user['profile'] == null
+                                            ? const Icon(Icons.person)
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          user['nickname'], // 닉네임
+                                          style: const TextStyle(
+                                              color: Colors.black87,
+                                              fontSize: 16.0),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      CustomWidget.chatButton(context, user)
+                                    ]),
                                   ),
                                 ),
                               );
+                            },
+                            separatorBuilder: (context, index) {
+                              return const SizedBox(height: 4.0); // 아이템 간 간격 설정
                             },
                           );
                         }

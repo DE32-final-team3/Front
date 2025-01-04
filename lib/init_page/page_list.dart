@@ -46,6 +46,8 @@ class PageList extends StatelessWidget {
 }
 
 class Pages extends StatefulWidget {
+  const Pages({super.key});
+
   @override
   _PageListState createState() => _PageListState();
 }

@@ -41,7 +41,6 @@ class UserApi {
 
       if (statuscode == 200) {
         await _storage.write(key: 'access_token', value: body['access_token']);
-        print('로그인 성공');
         return true;
       } else {
         String errorMsg = body['message'] ?? '로그인 실패';
@@ -257,7 +256,6 @@ class UserApi {
     try {
       if (response.statusCode == 200) {
         // 응답이 성공적인 경우
-        print("response success");
         var data = jsonDecode(utf8.decode(response.bodyBytes));
         // 'movies' 키에 해당하는 데이터를 List<Map<String, dynamic>> 형태로 반환
         return data; // 반환되는 데이터 구조에 맞게 수정
@@ -308,7 +306,7 @@ class UserApi {
 
     // URL 구성: 명시적으로 포트 8000 추가
     var url = Uri.https(
-      '$chatIP', // CHAT_IP와 포트를 결합
+      chatIP, // CHAT_IP와 포트를 결합
       path.startsWith('/') ? path.substring(1) : path, // 경로 앞 슬래시 제거
       {param: value}, // 쿼리 파라미터
     );
@@ -319,7 +317,6 @@ class UserApi {
       });
 
       if (response.statusCode == 200) {
-        print("Response success from CHAT_IP");
         var data = jsonDecode(utf8.decode(response.bodyBytes));
         return data; // 성공적으로 데이터를 반환
       } else {
@@ -409,7 +406,6 @@ class MovieApi {
 
       if (response.statusCode == 200) {
         // 응답이 성공적인 경우
-        print("response success");
         var data = jsonDecode(utf8.decode(response.bodyBytes));
         // 'movies' 키에 해당하는 데이터를 List<Map<String, dynamic>> 형태로 반환
         //print(data['movies']);
