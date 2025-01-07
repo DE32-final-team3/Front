@@ -52,11 +52,34 @@ class _SearchMovieState extends State<SearchMovie> {
 
   // 선택한 영화를 selectedMovies 리스트에 추가 또는 제거
   void _toggleSelectedMovie(Map<String, dynamic> movie) {
+    Map<String, dynamic> formatMovie = {};
+
+    // 영화 데이터를 일관된 포맷으로 변환
+    formatMovie['cast'] = movie['cast'] ?? [];
+    formatMovie['genres'] = movie['genre_ids'] ?? movie['genres'];
+    formatMovie['director'] = movie['director'] ?? [];
+    formatMovie['movie_id'] = movie['id'] ?? movie['movie_id'];
+    formatMovie['original_language'] = movie['original_language'] ?? '';
+    formatMovie['original_title'] = movie['original_title'] ?? '';
+    formatMovie['overview'] = movie['overview'] ?? '';
+    formatMovie['poster_path'] = movie['poster_path'] ?? '';
+    formatMovie['release_date'] = movie['release_date'] ?? '';
+    formatMovie['title'] = movie['title'];
+
+    movie = formatMovie;
+
     setState(() {
-      if (selectedMovies.contains(movie)) {
-        selectedMovies.remove(movie); // 선택된 카드라면 제거
+      // movie_id 기준으로 중복 여부 확인
+      if (selectedMovies.any(
+          (selectedMovie) => selectedMovie['movie_id'] == movie['movie_id'])) {
+        // 중복이 있다면 제거
+        selectedMovies = selectedMovies
+            .where((selectedMovie) =>
+                selectedMovie['movie_id'] != movie['movie_id'])
+            .toList();
       } else {
-        selectedMovies.add(movie); // 선택되지 않은 카드라면 추가
+        // 중복이 없다면 추가
+        selectedMovies.add(movie);
       }
     });
   }
@@ -139,7 +162,11 @@ class _SearchMovieState extends State<SearchMovie> {
                           itemCount: searchedMovies.length,
                           itemBuilder: (context, index) {
                             var movie = searchedMovies[index];
-                            bool isSelected = selectedMovies.contains(movie);
+                            bool isSelected = selectedMovies.any(
+                                (selectedMovie) =>
+                                    selectedMovie['movie_id'] == movie['id'] ||
+                                    selectedMovie['movie_id'] ==
+                                        movie['movie_id']);
                             return GestureDetector(
                               onTap: () {
                                 _toggleSelectedMovie(movie);
