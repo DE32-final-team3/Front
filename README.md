@@ -21,10 +21,13 @@ To set up Nginx and deploy the web application:
 ```
 # Update package list
 $ sudo apt updage
+
 # Install Nginx
 $ sudo apt install nginx -y
+
 # Copy build files to Nginx web directory
 $ sudo cp -r ~/web/* /var/www/html/
+
 # Restart Nginx to apply changes
 $ sudo systemctl restart nginx
 ```
